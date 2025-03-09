@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -11,11 +12,19 @@ export default function Home() {
           GoOut is a platform that helps you find the perfect gift for your
           friends and family.
         </p>
-        <div className="mt-10 flex items-center justify-center gap-x-6">
-          <Button size="lg">Get Started</Button>
-          <Button variant="outline" size="lg">
-            Learn More
-          </Button>
+
+        {/* Search Bar using ShadCN Components */}
+        <div className="mt-10 flex items-center justify-center">
+          <div className="relative w-full max-w-lg flex">
+            <Input
+              type="text"
+              placeholder="Search for experiences..."
+              className="rounded-r-none text-lg"
+            />
+            <Button className="rounded-l-none">
+              Search
+            </Button>
+          </div>
         </div>
       </div>
     </div>
