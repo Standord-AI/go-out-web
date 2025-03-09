@@ -10,7 +10,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="border-b bg-white">
+    <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo Section */}
         <div className="flex items-center gap-2">

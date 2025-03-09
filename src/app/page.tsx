@@ -1,7 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import HeroSection from "@/components/HeroSection";
-import CategoriesSection from "@/components/CategoriesSection";
+import HeroSection from "@/components/landing/HeroSection";
+import CategoriesSection from "@/components/landing/CategoriesSection";
+import InspirationSection from "@/components/landing/InspirationSection";
 
 export default function Home() {
   return (
@@ -23,6 +24,7 @@ export default function Home() {
         }
       />
       <CategoriesSection />
+      <InspirationSection />
     </div>
   );
 }
