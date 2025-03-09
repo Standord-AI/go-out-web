@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import SectionHeader from "../SectionHeader";
+import CategoryCard from "../ProductCard";
 
 interface Category {
   title: string;
@@ -44,27 +43,12 @@ export default function CategoriesSection() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {categories.map((category, index) => (
-          <Card
+          <CategoryCard
             key={index}
-            className="overflow-hidden hover:shadow-lg transition-shadow duration-100 p-0"
-          >
-            <CardContent className="p-0">
-              <div className="relative w-full h-48">
-                <Image
-                  src={category.image}
-                  alt={category.title}
-                  fill
-                  className="object-fill"
-                  priority
-                />
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col items-start p-4">
-              <h3 className="text-lg font-semibold">{category.title}</h3>
-              <p className="text-sm text-gray-500">{category.experiences}</p>
-            </CardFooter>
-          </Card>
+            title={category.title}
+            experiences={category.experiences}
+            image={category.image}
+          />
         ))}
       </div>
     </section>
