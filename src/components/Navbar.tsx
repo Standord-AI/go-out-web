@@ -16,7 +16,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <div className="relative h-8 w-8 bg-black rounded-full overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
-              L
+              G
             </div>
           </div>
           <span className="font-semibold text-xl">GoOut</span>

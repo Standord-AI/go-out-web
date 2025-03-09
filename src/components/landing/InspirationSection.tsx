@@ -28,7 +28,7 @@ const InspirationsSection = () => {
       {/* Section Title */}
       <SectionHeader
         title="Get Inspired for Your Next Experience"
-        subtitle="Discover and gift unforgettable day-outs, eat-outs, and more crafted to make every moment special."
+        subtitle="Here are some Articles that might help you find the perfect experience for you."
       />
 
       {/* Grid Layout */}
