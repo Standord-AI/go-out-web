@@ -2,11 +2,11 @@
 
 import React from "react";
 import SectionHeader from "../SectionHeader";
-import ExperienceCard from "../ExperienceCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import ListingCard from "../ListingCard";
 
 interface Experience {
   title: string;
@@ -23,7 +23,7 @@ const experiences: Experience[] = [
     title: "Luxury Tea Tasting",
     location: "Nuwara Eliya, Sri Lanka",
     rating: 4.8,
-    price: "$45",
+    price: "LKR 45,000.00",
     image: "/images/high-teas.jpg",
     duration: "2 hours",
     isFavorite: true,
@@ -32,7 +32,7 @@ const experiences: Experience[] = [
     title: "Scenic Train Ride",
     location: "Ella, Sri Lanka",
     rating: 4.7,
-    price: "$25",
+    price: "LKR 25,000.00",
     image: "/images/train-ride.jpg",
     duration: "3 hours",
     isFavorite: false,
@@ -41,7 +41,7 @@ const experiences: Experience[] = [
     title: "Jungle Safari Adventure",
     location: "Yala National Park, Sri Lanka",
     rating: 4.9,
-    price: "$90",
+    price: "LKR 90,000.00",
     image: "/images/safari.jpg",
     duration: "4 hours",
     isFavorite: false,
@@ -50,7 +50,7 @@ const experiences: Experience[] = [
     title: "Beachfront Candlelight Dinner",
     location: "Galle, Sri Lanka",
     rating: 4.6,
-    price: "$120",
+    price: "LKR 120,000.00",
     image: "/images/beach-dinner.jpg",
     duration: "5 hours",
     isFavorite: true,
@@ -59,7 +59,7 @@ const experiences: Experience[] = [
     title: "Yala Safari",
     location: "Yala National Park, Sri Lanka",
     rating: 3.5,
-    price: "$160",
+    price: "LKR 160,000.00",
     image: "/images/safari.jpg",
     duration: "6 hours",
     isFavorite: false,
@@ -68,7 +68,7 @@ const experiences: Experience[] = [
     title: "Sigiriya Sunrise",
     location: "Sigiriya, Sri Lanka",
     rating: 4.4,
-    price: "$220",
+    price: "LKR 220,000.00",
     image: "/images/sigiriya.jpg",
     duration: "7 hours",
     isFavorite: false,
@@ -77,7 +77,7 @@ const experiences: Experience[] = [
     title: "Pinnawala Elephant Orphanage",
     location: "Pinnawala, Sri Lanka",
     rating: 4.9,
-    price: "$70",
+    price: "LKR 70,000.00",
     image: "/images/elephant.jpg",
     duration: "8 hours",
     isFavorite: false,
@@ -111,13 +111,14 @@ const DiscoverSection = () => {
         <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
           <div className="flex space-x-6 ml-6">
             {experiences.map((exp, index) => (
-              <ExperienceCard
+              <ListingCard
                 key={index}
                 title={exp.title}
                 location={exp.location}
-                duration={exp.duration}
+                duration={exp.duration || ""}
                 price={exp.price}
-                image={exp.image}
+                imageSrc={exp.image}
+                altText={exp.title}
                 isFavorite={exp.isFavorite}
               />
             ))}
