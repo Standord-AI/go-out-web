@@ -14,14 +14,14 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   image,
 }) => {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 p-0">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 p-0 group">
       <CardContent className="p-0">
         <div className="relative w-full h-48 overflow-hidden">
           <Image
             src={image}
             alt={title}
             fill
-            className="object-cover transition-transform duration-500 ease-in-out hover:scale-110"
+            className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
             priority
           />
         </div>

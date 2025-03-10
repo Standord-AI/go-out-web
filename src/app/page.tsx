@@ -4,6 +4,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import CategoriesSection from "@/components/landing/CategoriesSection";
 import InspirationSection from "@/components/landing/InspirationSection";
 import DiscoverSection from "@/components/landing/DiscoverSection";
+import ActionBanner from "@/components/landing/ActionBanner";
 
 export default function Home() {
   return (
@@ -27,6 +28,7 @@ export default function Home() {
       <CategoriesSection />
       <InspirationSection />
       <DiscoverSection />
+      <ActionBanner />
     </div>
   );
 }

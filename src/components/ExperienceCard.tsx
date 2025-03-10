@@ -22,7 +22,7 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
   isFavorite = false,
 }) => {
   return (
-    <Card className="w-72 shrink-0 overflow-hidden relative p-0 flex flex-col mb-4">
+    <Card className="w-72 shrink-0 overflow-hidden relative p-0 flex flex-col mb-4 group">
       {/* Image */}
       <CardContent className="p-0">
         <div className="relative w-full h-48 overflow-hidden">
@@ -30,7 +30,7 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
             src={image}
             alt={title}
             fill
-            className="object-cover transition-transform duration-500 ease-in-out hover:scale-110"
+            className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
             priority
           />
         </div>
