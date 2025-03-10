@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import SectionHeader from "../SectionHeader";
 import ExperienceCard from "./ExperienceCard";
@@ -13,6 +15,7 @@ interface Experience {
   price: string;
   image: string;
   duration?: string;
+  isFavorite?: boolean;
 }
 
 const experiences: Experience[] = [
@@ -23,6 +26,7 @@ const experiences: Experience[] = [
     price: "$45",
     image: "/images/high-teas.jpg",
     duration: "2 hours",
+    isFavorite: true,
   },
   {
     title: "Scenic Train Ride",
@@ -31,6 +35,7 @@ const experiences: Experience[] = [
     price: "$25",
     image: "/images/train-ride.jpg",
     duration: "3 hours",
+    isFavorite: false,
   },
   {
     title: "Jungle Safari Adventure",
@@ -39,6 +44,7 @@ const experiences: Experience[] = [
     price: "$90",
     image: "/images/safari.jpg",
     duration: "4 hours",
+    isFavorite: false,
   },
   {
     title: "Beachfront Candlelight Dinner",
@@ -47,6 +53,7 @@ const experiences: Experience[] = [
     price: "$120",
     image: "/images/beach-dinner.jpg",
     duration: "5 hours",
+    isFavorite: true,
   },
   {
     title: "Yala Safari",
@@ -55,6 +62,7 @@ const experiences: Experience[] = [
     price: "$160",
     image: "/images/safari.jpg",
     duration: "6 hours",
+    isFavorite: false,
   },
   {
     title: "Sigiriya Sunrise",
@@ -63,6 +71,7 @@ const experiences: Experience[] = [
     price: "$220",
     image: "/images/sigiriya.jpg",
     duration: "7 hours",
+    isFavorite: false,
   },
   {
     title: "Pinnawala Elephant Orphanage",
@@ -71,6 +80,7 @@ const experiences: Experience[] = [
     price: "$70",
     image: "/images/elephant.jpg",
     duration: "8 hours",
+    isFavorite: false,
   },
   {
     title: "Kandy Cultural Tour",
@@ -79,6 +89,7 @@ const experiences: Experience[] = [
     price: "$150",
     image: "/images/temple-of-tooth.jpg",
     duration: "9 hours",
+    isFavorite: false,
   },
 ];
 
@@ -87,7 +98,7 @@ const DiscoverSection = () => {
     <section className="container mx-auto px-6 py-12 relative">
       {/* Title */}
       <SectionHeader
-        title="Explore Unique Experiences in Sri Lanka"
+        title="Explore Some of Our Popular Experiences"
         subtitle="These experiences are curated to make every moment special by the users of GoOut."
       />
 
@@ -107,6 +118,7 @@ const DiscoverSection = () => {
                 duration={exp.duration}
                 price={exp.price}
                 image={exp.image}
+                isFavorite={exp.isFavorite}
               />
             ))}
 

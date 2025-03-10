@@ -10,6 +10,7 @@ interface ExperienceCardProps {
   duration?: string;
   price: string;
   image: string;
+  isFavorite?: boolean;
 }
 
 const ExperienceCard: React.FC<ExperienceCardProps> = ({
@@ -18,6 +19,7 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
   duration,
   price,
   image,
+  isFavorite = false,
 }) => {
   return (
     <Card className="w-72 shrink-0 overflow-hidden relative p-0 flex flex-col mb-4">
@@ -67,8 +69,12 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
 
           <div className="flex items-center space-x-2">
             {/* Add to Favorites Button */}
-            <Button variant="ghost" size="icon">
-              <Heart className="w-6 h-6 text-gray-500 hover:text-red-500 transition" />
+            <Button variant="outline" size="icon" className="group">
+              <Heart
+                className={`w-6 h-6 text-gray-500 group-hover:text-red-500 transition ${
+                  isFavorite ? "text-red-500 fill-red-500" : ""
+                }`}
+              />
             </Button>
 
             {/* Book Now Button */}
