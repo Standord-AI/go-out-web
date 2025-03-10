@@ -2,7 +2,7 @@
 
 import React from "react";
 import SectionHeader from "../SectionHeader";
-import ExperienceCard from "./ExperienceCard";
+import ExperienceCard from "../ExperienceCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

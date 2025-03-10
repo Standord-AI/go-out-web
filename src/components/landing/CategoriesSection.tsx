@@ -1,7 +1,7 @@
 "use client";
 
 import SectionHeader from "../SectionHeader";
-import CategoryCard from "../ProductCard";
+import CategoryCard from "./ProductCard";
 
 interface Category {
   title: string;
