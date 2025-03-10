@@ -34,7 +34,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   onGiftClick,
 }) => {
   return (
-    <Card className="w-80 bg-white rounded-2xl pt-0 hover:shadow-lg transition-all duration-300">
+    <Card className="min-w-80 bg-white rounded-2xl pt-0 hover:shadow-lg transition-all duration-300 mb-4">
       <CardHeader className="relative p-0">
         <Image
           src={imageSrc}
@@ -54,14 +54,14 @@ const ListingCard: React.FC<ListingCardProps> = ({
           />
         </Button>
       </CardHeader>
-      <CardContent className="py-0">
+      <CardContent className="py-0 h-24 overflow-hidden max-h-24">
         <CardTitle className="text-lg mb-2 font-semibold text-gray-900">
           {title}
         </CardTitle>
-        <div className="flex items-center gap-4 text-gray-600 text-sm mt-2">
+        <div className="flex flex-col gap-4 text-gray-600 text-sm mt-2">
           <div className="flex items-center gap-1">
             <MapPin className="w-4 h-4 text-red-500" />
-            <span>{location}</span>
+            <span className="text-wrap">{location}</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4 text-red-500" />

@@ -5,11 +5,8 @@ import React from "react";
 
 const page = () => {
   return (
-    <div>
+    <div className="flex flex-col items-center justify-center">
       <div className="flex mt-5">
-        <div className="w-1/4">
-          <h1>Day Out</h1>
-        </div>
         <ListingCard
           imageSrc="/images/hotel.jpg"
           altText="Sunset & Sparkle Sydney Boat Cruise"
