@@ -7,6 +7,7 @@ interface Category {
   title: string;
   experiences: string;
   image: string;
+  endpoint?: string;
 }
 
 const categories: Category[] = [
@@ -14,21 +15,25 @@ const categories: Category[] = [
     title: "Day-outs",
     experiences: "60+ experiences",
     image: "/images/day-out.jpg",
+    endpoint: "day-outs",
   },
   {
     title: "Adventure Getaways",
     experiences: "40+ experiences",
     image: "/images/adventure-getaway.jpg",
+    endpoint: "adventures",
   },
   {
     title: "Romantic Dinner Dates",
     experiences: "30+ experiences",
     image: "/images/dinner-dates.jpg",
+    endpoint: "dinner-outs",
   },
   {
     title: "Luxury High Teas",
     experiences: "25+ experiences",
     image: "/images/high-teas.jpg",
+    endpoint: "high-teas",
   },
 ];
 
@@ -48,6 +53,7 @@ export default function CategoriesSection() {
             title={category.title}
             experiences={category.experiences}
             image={category.image}
+            endpoint={category.endpoint}
           />
         ))}
       </div>
