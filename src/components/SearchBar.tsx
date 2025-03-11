@@ -25,7 +25,14 @@ const filterData: FilterItem[] = [
   {
     label: "Location",
     type: "search",
-    options: ["Sydney", "New York", "Paris", "Tokyo", "London", "Rome"],
+    options: [
+      "Sydney, Australia",
+      "New York, USA",
+      "Paris, France",
+      "Tokyo, Japan",
+      "London, UK",
+      "Rome, Italy",
+    ],
   },
   {
     label: "Price",
@@ -60,24 +67,23 @@ interface FilterDropdownProps extends FilterItem {
   label: string;
   type: FilterType;
   options: string[];
+  onFilterChange: (filter: string, selectedOptions: string[]) => void;
 }
 
-function FilterDropdown({ label, type, options }: FilterDropdownProps) {
+function FilterDropdown({
+  label,
+  type,
+  options,
+  onFilterChange,
+}: FilterDropdownProps) {
   const [checkedItems, setCheckedItems] = React.useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState("");
-
-  // Filtered list for "search" type
-  const filteredOptions =
-    type === "search"
-      ? options.filter((option) =>
-          option.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : options;
 
   const handleCheckedChange = (option: string, checked: boolean) => {
-    setCheckedItems((prev) =>
-      checked ? [...prev, option] : prev.filter((item) => item !== option)
-    );
+    const newCheckedItems = checked
+      ? [...checkedItems, option]
+      : checkedItems.filter((item) => item !== option);
+    setCheckedItems(newCheckedItems);
+    onFilterChange(label, newCheckedItems);
   };
 
   return (
@@ -109,14 +115,13 @@ function FilterDropdown({ label, type, options }: FilterDropdownProps) {
         {type === "search" && (
           <Input
             placeholder={`Search ${label}`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
             className="mb-2"
+            onChange={(e) => onFilterChange(label, [e.target.value])}
           />
         )}
 
         {/* Render the filtered list of options as checkboxes */}
-        {filteredOptions.map((option) => {
+        {options.map((option) => {
           const isChecked = checkedItems.includes(option);
           return (
             <DropdownMenuCheckboxItem
@@ -135,7 +140,12 @@ function FilterDropdown({ label, type, options }: FilterDropdownProps) {
   );
 }
 
-export function SearchBar() {
+interface SearchBarProps {
+  onSearchChange: (query: string) => void;
+  onFilterChange: (filter: string, selectedOptions: string[]) => void;
+}
+
+export function SearchBar({ onSearchChange, onFilterChange }: SearchBarProps) {
   return (
     <div className="p-4 bg-white w-full sticky top-5 z-10">
       <div className="flex flex-wrap justify-center items-center gap-4">
@@ -159,6 +169,7 @@ export function SearchBar() {
               shadow-none
               flex-1
             "
+            onChange={(e) => onSearchChange(e.target.value)}
           />
 
           {/* Search Button */}
@@ -182,6 +193,7 @@ export function SearchBar() {
             label={filter.label}
             type={filter.type}
             options={filter.options}
+            onFilterChange={onFilterChange}
           />
         ))}
       </div>

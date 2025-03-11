@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import ListingCard from "@/components/ListingCard";
 
@@ -11,6 +11,9 @@ interface Listing {
   location: string;
   duration: string;
   price: string;
+  activity: string;
+  recipient: string;
+  occasion: string;
 }
 
 const mockListings: Listing[] = [
@@ -20,7 +23,10 @@ const mockListings: Listing[] = [
     title: "Sunset & Sparkle Sydney Boat Cruise",
     location: "Sydney, Australia",
     duration: "1 hour",
-    price: "LKR 11,183.69",
+    price: "$50",
+    activity: "Adventure",
+    recipient: "For Couples",
+    occasion: "Valentine's Day",
   },
   {
     id: "2",
@@ -28,7 +34,10 @@ const mockListings: Listing[] = [
     title: "Lakeside Motel Waterfront",
     location: "Melbourne, Australia",
     duration: "2 days",
-    price: "LKR 25,000.00",
+    price: "$200",
+    activity: "Travel",
+    recipient: "For Families",
+    occasion: "Family Vacation",
   },
   {
     id: "3",
@@ -36,7 +45,10 @@ const mockListings: Listing[] = [
     title: "Luxury Dinner in Paris",
     location: "Paris, France",
     duration: "3 hours",
-    price: "LKR 50,000.00",
+    price: "$150",
+    activity: "Food & Drink",
+    recipient: "For Him",
+    occasion: "Anniversary",
   },
   {
     id: "4",
@@ -44,13 +56,20 @@ const mockListings: Listing[] = [
     title: "Dinner Date in Sri Lanka",
     location: "Colombo, Sri Lanka",
     duration: "3 hours",
-    price: "LKR 50,000.00",
+    price: "$100",
+    activity: "Food & Drink",
+    recipient: "For Her",
+    occasion: "Date Night",
   },
 ];
 
 const AllExperiences = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilters, setSelectedFilters] = useState<{
+    [key: string]: string[];
+  }>({});
 
   useEffect(() => {
     // Simulating API call delay
@@ -60,11 +79,75 @@ const AllExperiences = () => {
     }, 1000); // Simulated 1-second delay
   }, []);
 
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleFilterChange = (filter: string, selectedOptions: string[]) => {
+    setSelectedFilters((prev) => ({
+      ...prev,
+      [filter]: selectedOptions,
+    }));
+  };
+
+  const filteredListings = listings.filter((listing) => {
+    const matchesSearch = listing.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    const matchesFilters = Object.entries(selectedFilters).every(
+      ([filter, selectedOptions]) => {
+        // Check based on the filter type
+        if (filter === "Location") {
+          return (
+            selectedOptions.length === 0 ||
+            selectedOptions.includes(listing.location)
+          );
+        } else if (filter === "Price") {
+          // Assuming price is a string like "$50", we need to convert it to a number for comparison
+          const priceValue = parseInt(listing.price.replace(/[^0-9]/g, "")); // Extract numeric value
+          return (
+            selectedOptions.length === 0 ||
+            selectedOptions.some((option) => {
+              const [min, max] = option
+                .split(" - ")
+                .map((v) => parseInt(v.replace(/[^0-9]/g, "")));
+              return max
+                ? priceValue >= min && priceValue <= max
+                : priceValue >= min;
+            })
+          );
+        } else if (filter === "Activity") {
+          return (
+            selectedOptions.length === 0 ||
+            selectedOptions.includes(listing.activity)
+          );
+        } else if (filter === "Recipient") {
+          return (
+            selectedOptions.length === 0 ||
+            selectedOptions.includes(listing.recipient)
+          );
+        } else if (filter === "Occasion") {
+          return (
+            selectedOptions.length === 0 ||
+            selectedOptions.includes(listing.occasion)
+          );
+        }
+        return true; // Default case
+      }
+    );
+
+    return matchesSearch && matchesFilters;
+  });
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Search Bar */}
       <div className="w-full mb-8">
-        <SearchBar />
+        <SearchBar
+          onSearchChange={handleSearchChange}
+          onFilterChange={handleFilterChange}
+        />
       </div>
 
       {/* Listings Section */}
@@ -72,7 +155,7 @@ const AllExperiences = () => {
         <p className="text-center text-gray-500">Loading experiences...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {listings.map((listing) => (
+          {filteredListings.map((listing) => (
             <ListingCard
               key={listing.id}
               imageSrc={listing.imageSrc}
@@ -81,7 +164,7 @@ const AllExperiences = () => {
               location={listing.location}
               duration={listing.duration}
               price={listing.price}
-              isFavorite={false} // Default false
+              isFavorite={false}
               onGiftClick={() => alert(`Booked: ${listing.title}`)}
             />
           ))}
