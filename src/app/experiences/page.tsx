@@ -3,18 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import ListingCard from "@/components/ListingCard";
-
-interface Listing {
-  id: string;
-  imageSrc: string;
-  title: string;
-  location: string;
-  duration: string;
-  price: string;
-  activity: string;
-  recipient: string;
-  occasion: string;
-}
+import { Listing } from "@/types";
 
 const mockListings: Listing[] = [
   {
@@ -165,7 +154,7 @@ const AllExperiences = () => {
       {loading ? (
         <p className="text-center text-gray-500">Loading experiences...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredListings.map((listing) => (
             <ListingCard
               key={listing.id}
