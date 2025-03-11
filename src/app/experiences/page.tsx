@@ -61,6 +61,17 @@ const mockListings: Listing[] = [
     recipient: "For Her",
     occasion: "Date Night",
   },
+  {
+    id: "5",
+    imageSrc: "/images/dinner-dates.jpg",
+    title: "Dinner Date in Sri Lanka",
+    location: "Colombo, Sri Lanka",
+    duration: "3 hours",
+    price: "$100",
+    activity: "Food & Drink",
+    recipient: "For Her",
+    occasion: "Date Night",
+  },
 ];
 
 const AllExperiences = () => {
