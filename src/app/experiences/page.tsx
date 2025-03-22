@@ -15,10 +15,25 @@ const AllExperiences = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch("/data/data.json");
-      const data = await response.json();
-      setListings(data.listings);
-      setLoading(false);
+      try {
+        console.log("Fetching listings data...");
+        const response = await fetch("/data/data.json");
+        const data = await response.json();
+        console.log("Fetched listings:", data.listings);
+        
+        // Ensure all listings have string IDs
+        const processedListings = data.listings.map((listing: Listing) => ({
+          ...listing,
+          id: String(listing.id) // Ensure ID is a string
+        }));
+        
+        console.log("Processed listings:", processedListings);
+        setListings(processedListings);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching listings:", error);
+        setLoading(false);
+      }
     };
 
     setTimeout(() => {
@@ -102,19 +117,22 @@ const AllExperiences = () => {
         <p className="text-center text-gray-500">Loading experiences...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredListings.map((listing) => (
-            <ListingCard
-              key={listing.id}
-              imageSrc={listing.imageSrc}
-              altText={listing.title}
-              title={listing.title}
-              location={listing.location}
-              duration={listing.duration}
-              price={listing.price}
-              isFavorite={false}
-              onGiftClick={() => alert(`Booked: ${listing.title}`)}
-            />
-          ))}
+          {filteredListings.map((listing) => {
+            console.log("Rendering listing card with ID:", listing.id);
+            return (
+              <ListingCard
+                key={listing.id}
+                id={listing.id}
+                imageSrc={listing.imageSrc}
+                altText={listing.title}
+                title={listing.title}
+                location={listing.location}
+                duration={listing.duration}
+                price={listing.price}
+                isFavorite={false}
+              />
+            );
+          })}
         </div>
       )}
     </div>
