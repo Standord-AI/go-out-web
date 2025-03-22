@@ -29,7 +29,7 @@ export default function TwentyFirstBirthdayPage() {
         Whether you're looking for a romantic getaway, a family adventure, or a solo escape, 
         we've got you covered with a wide range of unforgettable experiences in over 100 countries. 
         Browse the range and choose an experience gift that'll create memories to last a lifetime!"
-      image="/images/adventure.jpg"
+      image="/images/adventure-getaway.jpg"
       results={listings.length}
       listings={listings}
       loading={loading}

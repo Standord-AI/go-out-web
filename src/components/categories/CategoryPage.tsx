@@ -47,6 +47,7 @@ export const CategoryPage: FC<CategoryPageProps> = ({
             listings.map((listing) => (
               <ListingCard
                 key={listing.id}
+                id={listing.id}
                 imageSrc={listing.imageSrc}
                 altText={listing.title}
                 title={listing.title}
@@ -54,7 +55,6 @@ export const CategoryPage: FC<CategoryPageProps> = ({
                 duration={listing.duration}
                 price={listing.price}
                 isFavorite={false}
-                onGiftClick={() => alert(`Booked: ${listing.title}`)}
               />
             ))
           )}
