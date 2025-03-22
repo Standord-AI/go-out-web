@@ -15,7 +15,9 @@ interface ExperienceDetailsProps {
   experienceId: string;
 }
 
-export default function ExperienceDetails({ experienceId }: ExperienceDetailsProps) {
+export default function ExperienceDetails({
+  experienceId,
+}: ExperienceDetailsProps) {
   const [experience, setExperience] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -214,7 +216,7 @@ export default function ExperienceDetails({ experienceId }: ExperienceDetailsPro
     console.log("Reported review:", reviewId);
     // Implement your report functionality here
   };
-  
+
   // Handler for booking submissions
   const handleBooking = (bookingData: BookingData) => {
     console.log("Booking submitted:", bookingData);
@@ -225,13 +227,10 @@ export default function ExperienceDetails({ experienceId }: ExperienceDetailsPro
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Image Carousel Component */}
-        <ImageCarousel 
-          images={images} 
-          altText={experience.title} 
-        />
+        <ImageCarousel images={images} altText={experience.title} />
 
         {/* Booking Form Component */}
-        <BookingForm 
+        <BookingForm
           price={experience.price}
           onBooking={handleBooking}
           showTimeSelector={true}
@@ -242,7 +241,7 @@ export default function ExperienceDetails({ experienceId }: ExperienceDetailsPro
       </div>
 
       {/* Header Info Component */}
-      <HeaderInfo 
+      <HeaderInfo
         title={experience.title}
         location={experience.location}
         duration={experience.duration}
@@ -259,7 +258,7 @@ export default function ExperienceDetails({ experienceId }: ExperienceDetailsPro
 
         {/* Overview Tab Component */}
         <TabsContent value="overview">
-          <OverviewTab 
+          <OverviewTab
             description="Experience the authentic culture and beauty of this unique adventure. Join us for an unforgettable journey that will create memories to last a lifetime."
             highlights={highlights}
             included={included}
@@ -269,7 +268,7 @@ export default function ExperienceDetails({ experienceId }: ExperienceDetailsPro
 
         {/* Important Information Tab Component */}
         <TabsContent value="important">
-          <ImportantInfoTab 
+          <ImportantInfoTab
             exclusions={exclusions}
             additionalInfo={additionalInfo}
           />
@@ -277,15 +276,19 @@ export default function ExperienceDetails({ experienceId }: ExperienceDetailsPro
 
         {/* Location Tab Component */}
         <TabsContent value="location">
-          <LocationTab 
-            address="123 Adventure St, Cityville, Country"
-            googleMapsUrl={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("123 Adventure St, Cityville, Country")}`}
+          <LocationTab
+            address="Eiffel Tower, Paris, France"
+            lat={48.8584}
+            lng={2.2945}
+            googleMapsUrl={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              "Eiffel Tower, Paris, France"
+            )}`}
           />
         </TabsContent>
 
         {/* Reviews Tab Component */}
         <TabsContent value="reviews">
-          <ReviewsTab 
+          <ReviewsTab
             reviews={reviews}
             stats={reviewStats}
             onAddReview={handleAddReview}
