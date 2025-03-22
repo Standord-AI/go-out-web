@@ -113,6 +113,7 @@ const DiscoverSection = () => {
             {experiences.map((exp, index) => (
               <ListingCard
                 key={index}
+                id={index.toString()}
                 title={exp.title}
                 location={exp.location}
                 duration={exp.duration || ""}
