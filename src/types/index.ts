@@ -70,6 +70,7 @@ export interface User {
   businessProfile?: BusinessProfile;
   savedExperiences: string[];  // Array of Experience ObjectIds
   notificationPreferences: NotificationPreferences;
+  clerkId?: string;
 }
 
 // Experiences
