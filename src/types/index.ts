@@ -322,3 +322,73 @@ export type NotificationType =
   | 'payment_failed'
   | 'payout_processed'
   | 'experience_update';
+
+// API Response Types
+export interface ApiLocation {
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  city: string;
+  state: string;
+  country: string;
+  address: string;
+}
+
+export interface ApiPrice {
+  amount: number;
+  currency: string;
+}
+
+export interface ApiAgeRestrictions {
+  minAge: number;
+  maxAge: number | null;
+}
+
+export interface ApiCategory {
+  _id: string;
+  name: string;
+  description: string;
+  image: string;
+}
+
+export interface ApiExperience {
+  _id: string;
+  refNo: string;
+  title: string;
+  description: string;
+  duration: number;
+  highlights: string[];
+  inclusions: string[];
+  exclusions: string[];
+  additionalInfo: string[];
+  images: string[];
+  maxParticipants: number;
+  physicalRequirements: string[];
+  languages: string[];
+  status: string;
+  expiresAt: string;
+  isActive: boolean;
+  archived: boolean;
+  category: ApiCategory;
+  tags: string[];
+  reviews: any[];
+  createdAt: string;
+  updatedAt: string;
+  location: ApiLocation;
+  price: ApiPrice;
+  ageRestrictions: ApiAgeRestrictions;
+}
+
+export interface ApiPagination {
+  currentPage: number;
+  totalPages: number;
+  totalExperiences: number;
+  limit: number;
+}
+
+export interface CategoryExperiencesResponse {
+  category: ApiCategory;
+  experiences: ApiExperience[];
+  pagination: ApiPagination;
+}

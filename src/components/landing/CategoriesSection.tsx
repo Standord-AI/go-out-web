@@ -114,7 +114,7 @@ export default function CategoriesSection() {
             title={category.name}
             experiences={`${category.experienceCount}+ experiences`}
             image={category.image}
-            endpoint={category.name.toLowerCase().replace(/\s+/g, '-')}
+            endpoint={category._id}
           />
         ))}
       </div>
