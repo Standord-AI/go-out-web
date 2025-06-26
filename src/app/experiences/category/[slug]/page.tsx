@@ -4,6 +4,7 @@ import React, { useEffect, useState, use } from 'react';
 import { CategoryPage } from '@/components/categories/CategoryPage';
 import { CategoryExperiencesResponse, ApiExperience } from '@/types';
 import { Listing } from '@/types';
+import { SETTINGS } from '@/core/config/common.settings';
 
 interface PageProps {
   params: Promise<{
@@ -21,7 +22,7 @@ const CategoryPageWrapper: React.FC<PageProps> = ({ params }) => {
     const fetchCategoryData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3000/categories/${slug}/experiences`);
+        const response = await fetch(`${SETTINGS.CMS_API}/categories/${slug}/experiences`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
