@@ -22,6 +22,7 @@ interface Experience {
 interface Category {
   _id: string;
   name: string;
+  slug: string;
   description: string;
   image: string;
   isActive: boolean;
@@ -114,7 +115,7 @@ export default function CategoriesSection() {
             title={category.name}
             experiences={`${category.experienceCount}+ experiences`}
             image={category.image}
-            endpoint={category._id}
+            endpoint={category.slug}
           />
         ))}
       </div>

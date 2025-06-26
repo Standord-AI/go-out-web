@@ -7,12 +7,12 @@ import { Listing } from '@/types';
 
 interface PageProps {
   params: Promise<{
-    id: string;
+    slug: string;
   }>;
 }
 
 const CategoryPageWrapper: React.FC<PageProps> = ({ params }) => {
-  const { id } = use(params);
+  const { slug } = use(params);
   const [data, setData] = useState<CategoryExperiencesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ const CategoryPageWrapper: React.FC<PageProps> = ({ params }) => {
     const fetchCategoryData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3000/categories/${id}/experiences`);
+        const response = await fetch(`http://localhost:3000/categories/${slug}/experiences`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -37,10 +37,10 @@ const CategoryPageWrapper: React.FC<PageProps> = ({ params }) => {
       }
     };
 
-    if (id) {
+    if (slug) {
       fetchCategoryData();
     }
-  }, [id]);
+  }, [slug]);
 
   // Transform API experiences to Listing format for CategoryPage component
   const transformExperiencesToListings = (experiences: ApiExperience[]): Listing[] => {
