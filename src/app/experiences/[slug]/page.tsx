@@ -5,7 +5,7 @@ import ExperienceDetails from "@/components/listings/ExperienceDetails";
 
 export default function ExperienceDetailsPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const slug = params?.slug as string;
 
-  return <ExperienceDetails experienceId={id} />;
+  return <ExperienceDetails experienceId={slug} />;
 }

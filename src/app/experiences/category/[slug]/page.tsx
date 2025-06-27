@@ -47,6 +47,7 @@ const CategoryPageWrapper: React.FC<PageProps> = ({ params }) => {
   const transformExperiencesToListings = (experiences: ApiExperience[]): Listing[] => {
     return experiences.map((exp) => ({
       id: exp._id,
+      slug: exp.slug,
       imageSrc: exp.images[0] || '/images/placeholder.jpg',
       title: exp.title,
       location: `${exp.location.city}, ${exp.location.state}`,

@@ -1,5 +1,6 @@
 export interface Listing {
   id: string;
+  slug: string;
   imageSrc: string;
   title: string;
   location: string;
@@ -355,6 +356,7 @@ export interface ApiCategory {
 export interface ApiExperience {
   _id: string;
   refNo: string;
+  slug: string;
   title: string;
   description: string;
   duration: number;

@@ -29,7 +29,7 @@ export default function ExperienceDetails({
         setLoading(true);
         console.log("Fetching experience with ID:", experienceId);
         
-        const response = await fetch(`${SETTINGS.CMS_API}/experiences/get-one/${experienceId}`);
+        const response = await fetch(`${SETTINGS.CMS_API}/experiences/${experienceId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

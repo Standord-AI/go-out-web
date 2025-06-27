@@ -39,6 +39,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'patisserie-valerie.co.uk',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'dbijapkm3o6fj.cloudfront.net',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

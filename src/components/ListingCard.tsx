@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 
 interface ListingCardProps {
   id: string;
+  slug: string;
   imageSrc: string;
   altText: string;
   title: string;
@@ -26,6 +27,7 @@ interface ListingCardProps {
 
 const ListingCard: React.FC<ListingCardProps> = ({
   id,
+  slug,
   imageSrc,
   altText,
   title,
@@ -38,13 +40,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
   // Ensure the ID is valid before navigation
   const navigateToDetails = () => {
-    if (!id) {
-      console.error("Cannot navigate: ID is undefined or empty");
+    if (!slug) {
+      console.error("Cannot navigate: slug is undefined or empty");
       return;
     }
     
-    console.log("Navigating to experience details with ID:", id);
-    router.push(`/experiences/${id}`);
+    console.log("Navigating to experience details with slug:", slug);
+    router.push(`/experiences/${slug}`);
   };
 
   return (
