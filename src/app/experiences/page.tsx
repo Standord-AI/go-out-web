@@ -98,7 +98,7 @@ const AllExperiences = () => {
   const transformExperiencesToListings = (experiences: ApiExperience[]) => {
     return experiences.map((exp) => ({
       id: exp._id,
-      slug: exp.refNo, // Using refNo as slug
+      slug: exp.slug,
       imageSrc: exp.images?.[0] || '/images/placeholder.jpg',
       title: exp.title,
       location: exp.location ? `${exp.location.city}, ${exp.location.state}` : 'Location not specified',
@@ -169,8 +169,8 @@ const AllExperiences = () => {
             console.log("Rendering listing card with ID:", listing.id);
             return (
               <ListingCard
-                slug={listing.slug}
                 key={listing.id}
+                slug={listing.slug}
                 id={listing.id}
                 imageSrc={listing.imageSrc}
                 altText={listing.title}
