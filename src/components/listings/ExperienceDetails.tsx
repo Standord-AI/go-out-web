@@ -10,26 +10,32 @@ import { ImportantInfoTab } from "./tabs/ImportantInfoTab";
 import { LocationTab } from "./tabs/LocationTab";
 import { ReviewsTab } from "./tabs/ReviewsTab";
 import { ApiExperience } from "@/types";
-import { SETTINGS } from '@/core/config/common.settings';
 
 interface ExperienceDetailsProps {
   experienceId: string;
+  initialData?: ApiExperience;
 }
 
 export default function ExperienceDetails({
   experienceId,
+  initialData,
 }: ExperienceDetailsProps) {
-  const [experience, setExperience] = useState<ApiExperience | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [experience, setExperience] = useState<ApiExperience | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Only fetch data if we don't have initial data
+    if (initialData) {
+      return;
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
         console.log("Fetching experience with ID:", experienceId);
         
-        const response = await fetch(`${SETTINGS.CMS_API}/experiences/${experienceId}`);
+        const response = await fetch(`/api/experiences/${experienceId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -49,7 +55,7 @@ export default function ExperienceDetails({
     if (experienceId) {
       fetchData();
     }
-  }, [experienceId]);
+  }, [experienceId, initialData]);
 
   if (loading) {
     return (

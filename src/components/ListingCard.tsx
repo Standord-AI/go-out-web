@@ -3,7 +3,7 @@
 import React from "react";
 import { Heart, MapPin, Clock, ShoppingCart } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   CardHeader,
@@ -36,22 +36,10 @@ const ListingCard: React.FC<ListingCardProps> = ({
   price,
   isFavorite,
 }) => {
-  const router = useRouter();
-
-  // Ensure the ID is valid before navigation
-  const navigateToDetails = () => {
-    if (!slug) {
-      console.error("Cannot navigate: slug is undefined or empty");
-      return;
-    }
-    
-    console.log("Navigating to experience details with slug:", slug);
-    router.push(`/experiences/${slug}`);
-  };
 
   return (
-    <div className="block no-underline">
-      <Card className="min-w-80 bg-white rounded-2xl pt-0 hover:shadow-lg transition-all duration-300 mb-4 cursor-pointer" onClick={navigateToDetails}>
+    <Link href={`/experiences/${slug}`} className="block no-underline">
+      <Card className="min-w-80 bg-white rounded-2xl pt-0 hover:shadow-lg transition-all duration-300 mb-4 cursor-pointer">
         <CardHeader className="relative p-0">
           <Image
             src={imageSrc}
@@ -77,13 +65,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
           </Button>
         </CardHeader>
         <CardContent className="py-0 h-24 overflow-hidden max-h-24">
-          <CardTitle 
-            className="text-lg mb-2 font-semibold text-gray-900 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToDetails();
-            }}
-          >
+          <CardTitle className="text-lg mb-2 font-semibold text-gray-900">
             {title}
           </CardTitle>
           <div className="flex flex-col gap-4 text-gray-600 text-sm mt-2">
@@ -100,11 +82,6 @@ const ListingCard: React.FC<ListingCardProps> = ({
         <CardFooter className="flex items-center justify-between border-t pt-3">
           <span className="text-gray-900 font-medium">{price}</span>
           <Button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              navigateToDetails();
-            }}
             className="bg-orange-500 text-white font-semibold px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300"
           >
             <ShoppingCart className="w-5 h-5 text-white mr-1" />
@@ -112,7 +89,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
           </Button>
         </CardFooter>
       </Card>
-    </div>
+    </Link>
   );
 };
 

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import SectionHeader from "../SectionHeader";
 import CategoryCard from "./ProductCard";
-import { SETTINGS } from "@/core/config/common.settings";
 
 interface Experience {
   _id: string;
@@ -47,7 +46,7 @@ export default function CategoriesSection() {
       try {
         setLoading(true);
         const response = await axios.get<ApiResponse>(
-          `${SETTINGS.CMS_API}/categories/with-experiences`
+          `/api/categories`
         );
         setCategories(response.data.categories);
         setError(null);
