@@ -56,8 +56,6 @@ const AllExperiences = () => {
       const result: PagedExperiencesResponse[] = await response.json();
       const data = result[0]; // The API returns an array with one object containing metadata and data
       
-      console.log("Fetched experiences:", data);
-      
       if (data && data.data) {
         setExperiences(data.data);
         setPagination(prev => ({
@@ -164,7 +162,7 @@ const AllExperiences = () => {
       {loading ? (
         <p className="text-center text-gray-500">Loading experiences...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
           {listings.map((listing) => {
             console.log("Rendering listing card with ID:", listing.id);
             return (
