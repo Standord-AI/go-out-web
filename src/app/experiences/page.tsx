@@ -37,6 +37,9 @@ const AllExperiences = () => {
           searchText: searchQuery || "",
           archived: false,
           status: true,
+          activities: selectedFilters.activities || [],
+          recipients: selectedFilters.recipients || [],
+          occassions: selectedFilters.occassions || [],
           ...filters,
         },
       };
@@ -77,7 +80,7 @@ const AllExperiences = () => {
 
   useEffect(() => {
     fetchExperiences();
-  }, [fetchExperiences]);
+  }, [fetchExperiences, selectedFilters]);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -131,12 +134,21 @@ const AllExperiences = () => {
                 ? priceValue >= min && priceValue <= max
                 : priceValue >= min;
             });
-          case "Activity":
-            return selectedOptions.includes(experience.category?.name || '');
-          case "Recipient":
-            return selectedOptions.includes('All ages'); // Default for now
-          case "Occasion":
-            return selectedOptions.includes('Any occasion'); // Default for now
+          case "activities":
+            if (!experience.activities || experience.activities.length === 0) return false;
+            return selectedOptions.some(option => 
+              experience.activities.includes(option)
+            );
+          case "recipients":
+            if (!experience.recipients || experience.recipients.length === 0) return false;
+            return selectedOptions.some(option => 
+              experience.recipients.includes(option)
+            );
+          case "occassions":
+            if (!experience.occassions || experience.occassions.length === 0) return false;
+            return selectedOptions.some(option => 
+              experience.occassions.includes(option)
+            );
           default:
             return true;
         }

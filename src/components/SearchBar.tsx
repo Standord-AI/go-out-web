@@ -17,6 +17,7 @@ type FilterType = "search" | "checkbox";
 
 interface FilterItem {
   label: string;
+  displayName: string;
   type: FilterType;
   options: string[];
 }
@@ -24,6 +25,7 @@ interface FilterItem {
 const filterData: FilterItem[] = [
   {
     label: "Location",
+    displayName: "Location",
     type: "search",
     options: [
       "Sydney, Australia",
@@ -36,42 +38,47 @@ const filterData: FilterItem[] = [
   },
   {
     label: "Price",
+    displayName: "Price",
     type: "checkbox",
     options: ["$0 - $50", "$50 - $100", "$100 - $200", "$200+"],
   },
   {
-    label: "Activity",
+    label: "activities",
+    displayName: "Activity",
     type: "checkbox",
-    options: ["Adventure", "Driving", "Wildlife", "Travel", "Food & Drink"],
+    options: ["Hiking", "Swimming", "Sightseeing", "Photography", "Cooking Classes", "Wine Tasting", "Yoga & Wellness", "Water Sports", "Cultural Tours", "Adventure Sports", "Wildlife Safari", "Spa & Relaxation"],
   },
   {
-    label: "Recipient",
+    label: "recipients",
+    displayName: "Recipient",
     type: "checkbox",
     options: [
-      "For Groups",
-      "For Him",
-      "Kids",
-      "For Her",
-      "Couples",
       "Families",
+      "Couples",
+      "Solo Travelers",
+      "Friends",
+      "Business Groups",
+      "Students",
+      "Seniors",
+      "Adventure Seekers",
+      "Luxury Travelers",
     ],
   },
   {
-    label: "Occasion",
+    label: "occassions",
+    displayName: "Occasion",
     type: "checkbox",
-    options: ["Wedding", "Valentine's Day", "Graduation", "Father's Day"],
+    options: ["Weddings", "Engagements", "Graduations", "Anniversaries", "Birthdays", "Mother's Day", "Father's Day", "Valentine's Day", "Children's Day", "Grandparents' Day", "Christmas", "Eid", "Diwali", "Holi", "Thanksgiving", "New Year", "Corporate Events", "Team Building", "Holiday Celebrations", "Cultural Festivals"],
   },
 ];
 
 interface FilterDropdownProps extends FilterItem {
-  label: string;
-  type: FilterType;
-  options: string[];
   onFilterChange: (filter: string, selectedOptions: string[]) => void;
 }
 
 function FilterDropdown({
   label,
+  displayName,
   type,
   options,
   onFilterChange,
@@ -98,14 +105,14 @@ function FilterDropdown({
             flex items-center
           "
         >
-          {label}
+          {displayName}
           <ChevronDown className="w-4 h-4 ml-2" />
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="p-2">
         <DropdownMenuLabel className="text-sm font-semibold">
-          {label}
+          {displayName}
         </DropdownMenuLabel>
 
         {/* For better separation */}
@@ -114,7 +121,7 @@ function FilterDropdown({
         {/* If this filter type is "search," show an input at the top */}
         {type === "search" && (
           <Input
-            placeholder={`Search ${label}`}
+            placeholder={`Search ${displayName}`}
             className="mb-2"
             onChange={(e) => onFilterChange(label, [e.target.value])}
           />
@@ -191,6 +198,7 @@ export function SearchBar({ onSearchChange, onFilterChange }: SearchBarProps) {
           <FilterDropdown
             key={filter.label}
             label={filter.label}
+            displayName={filter.displayName}
             type={filter.type}
             options={filter.options}
             onFilterChange={onFilterChange}

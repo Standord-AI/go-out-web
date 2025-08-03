@@ -374,6 +374,9 @@ export interface ApiExperience {
   archived: boolean;
   category: ApiCategory;
   tags: string[];
+  occassions: string[];
+  recipients: string[];
+  activities: string[];
   reviews: any[];
   createdAt: string;
   updatedAt: string;
