@@ -14,7 +14,9 @@ export function Navbar() {
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo Section */}
-        <Image src="/logo/logo-long.png" alt="GoOut" width={100} height={32} />
+        <Link href="/">
+          <Image src="/logo/logo-long.png" alt="GoOut" width={100} height={32} />
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
