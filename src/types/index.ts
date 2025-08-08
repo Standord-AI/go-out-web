@@ -397,3 +397,58 @@ export interface CategoryExperiencesResponse {
   experiences: ApiExperience[];
   pagination: ApiPagination;
 }
+
+// Cart Types
+export interface CartItem {
+  id: string;
+  experienceId: string;
+  title: string;
+  image: string;
+  price: number;
+  currency: string;
+  quantity: number;
+  date: Date;
+  time?: string;
+  location: {
+    city: string;
+    country: string;
+  };
+  duration: string;
+  maxParticipants: number;
+}
+
+export interface Cart {
+  items: CartItem[];
+  totalItems: number;
+  subtotal: number;
+  taxes: number;
+  fees: number;
+  total: number;
+  currency: string;
+}
+
+// Checkout Types
+export interface CheckoutFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  specialRequests?: string;
+}
+
+export interface PaymentMethod {
+  id: string;
+  type: 'card' | 'paypal';
+  last4?: string;
+  brand?: string;
+  isDefault: boolean;
+}
+
+export interface OrderSummary {
+  items: CartItem[];
+  subtotal: number;
+  taxes: number;
+  fees: number;
+  total: number;
+  currency: string;
+}

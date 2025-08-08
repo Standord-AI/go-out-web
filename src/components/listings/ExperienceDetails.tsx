@@ -150,7 +150,16 @@ export default function ExperienceDetails({
 
         {/* Booking Form Component */}
         <BookingForm
+          experienceId={experience._id}
+          title={experience.title}
+          image={experience.images[0]}
           price={formatPrice(experience.price)}
+          location={{
+            city: experience.location.city,
+            country: experience.location.country
+          }}
+          duration={formatDuration(experience.duration)}
+          maxParticipants={experience.maxParticipants}
           onBooking={handleBooking}
           showTimeSelector={true}
           timeIntervals={[30, 60, 120]} // 30 mins, 1 hour, 2 hours

@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { FiMenu, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { CartIcon } from "./CartIcon";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,6 +34,7 @@ export function Navbar() {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-4">
+          <CartIcon />
           <Button variant="outline" size="sm">
             Log in
           </Button>
@@ -72,7 +74,8 @@ export function Navbar() {
               {/* Navigation Links */}
               <NavLinks />
 
-              {/* Auth Buttons */}
+              {/* Cart and Auth Buttons */}
+              <CartIcon className="w-full" />
               <Button variant="outline" size="sm">
                 Log in
               </Button>
