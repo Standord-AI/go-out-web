@@ -17,7 +17,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   endpoint,
 }) => {
   return (
-    <Link href={`/experiences/category/${endpoint}`}>
+    <Link href={endpoint || '#'}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 p-0 group">
         <CardContent className="p-0">
           <div className="relative w-full h-48 overflow-hidden">

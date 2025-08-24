@@ -1,9 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { CategoryPage } from '@/components/categories/CategoryPage';
-import { CategoryExperiencesResponse, ApiExperience } from '@/types';
-import { Listing } from '@/types';
-import { SETTINGS } from '@/core/config/common.settings';
+import SectionHeader from '@/components/SectionHeader';
+import CategoryCard from '@/components/landing/ProductCard';
 
 interface PageProps {
   params: Promise<{
@@ -11,51 +9,155 @@ interface PageProps {
   }>;
 }
 
+interface SubCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  experienceCount: number;
+}
+
 export default async function CategoryPageWrapper({ params }: PageProps) {
   const { slug } = await params;
 
   try {
-    // Pre-fetch the category data on the server side
-    const response = await fetch(`${SETTINGS.CMS_API}/categories/${slug}/experiences`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    let subCategories: SubCategory[] = [];
+    let categoryTitle = '';
+    let categoryDescription = '';
 
-    if (!response.ok) {
+    // Define fallback subcategories for each main category
+    const fallbackSubcategories = {
+      activities: [
+        { _id: 'adventure', name: 'Adventure', slug: 'adventure', description: 'Thrilling outdoor activities', image: '/images/adventure-getaway.jpg', experienceCount: 8 },
+        { _id: 'cultural', name: 'Cultural', slug: 'cultural', description: 'Traditional and cultural experiences', image: '/images/temple-of-tooth.jpg', experienceCount: 6 },
+        { _id: 'nature', name: 'Nature', slug: 'nature', description: 'Natural and wildlife experiences', image: '/images/safari.jpg', experienceCount: 7 },
+        { _id: 'water-sports', name: 'Water Sports', slug: 'water-sports', description: 'Aquatic adventures', image: '/images/beach-dinner.jpg', experienceCount: 4 }
+      ],
+      occasions: [
+        { _id: 'birthday', name: 'Birthday', slug: 'birthday', description: 'Special birthday celebrations', image: '/images/romantic-dinners.jpg', experienceCount: 5 },
+        { _id: 'anniversary', name: 'Anniversary', slug: 'anniversary', description: 'Romantic anniversary experiences', image: '/images/romantic-dinners.jpg', experienceCount: 4 },
+        { _id: 'corporate', name: 'Corporate', slug: 'corporate', description: 'Business and team building', image: '/images/day-out.jpg', experienceCount: 3 },
+        { _id: 'holiday', name: 'Holiday', slug: 'holiday', description: 'Holiday and seasonal experiences', image: '/images/high-teas.jpg', experienceCount: 6 }
+      ],
+      recipients: [
+        { _id: 'couples', name: 'Couples', slug: 'couples', description: 'Perfect for romantic getaways', image: '/images/romantic-dinners.jpg', experienceCount: 8 },
+        { _id: 'families', name: 'Families', slug: 'families', description: 'Family-friendly experiences', image: '/images/day-out.jpg', experienceCount: 6 },
+        { _id: 'friends', name: 'Friends', slug: 'friends', description: 'Group activities for friends', image: '/images/adventure-getaway.jpg', experienceCount: 5 },
+        { _id: 'solo', name: 'Solo Travelers', slug: 'solo', description: 'Individual experiences', image: '/images/sigiriya.jpg', experienceCount: 4 }
+      ]
+    };
+
+    // Fetch subcategories based on the main category
+    try {
+      switch (slug) {
+        case 'activities':
+          const activitiesRes = await fetch('http://localhost:3000/activities/get-all');
+          if (activitiesRes.ok) {
+            const activities = await activitiesRes.json();
+            subCategories = activities.map((activity: any) => ({
+              _id: activity._id,
+              name: activity.name,
+              slug: activity.slug,
+              description: activity.description,
+              image: activity.image || '/images/adventure-getaway.jpg',
+              experienceCount: 0 // This would need to be fetched separately
+            }));
+          } else {
+            subCategories = fallbackSubcategories.activities;
+          }
+          categoryTitle = 'Activities & Adventures';
+          categoryDescription = 'Discover exciting activities and adventures for every thrill-seeker';
+          break;
+
+        case 'occasions':
+          const occasionsRes = await fetch('http://localhost:3000/occasions/get-all');
+          if (occasionsRes.ok) {
+            const occasions = await occasionsRes.json();
+            subCategories = occasions.map((occasion: any) => ({
+              _id: occasion._id,
+              name: occasion.name,
+              slug: occasion.slug,
+              description: occasion.description,
+              image: occasion.image || '/images/romantic-dinners.jpg',
+              experienceCount: 0 // This would need to be fetched separately
+            }));
+          } else {
+            subCategories = fallbackSubcategories.occasions;
+          }
+          categoryTitle = 'Special Occasions';
+          categoryDescription = 'Perfect experiences for birthdays, anniversaries, and special moments';
+          break;
+
+        case 'recipients':
+          const recipientsRes = await fetch('http://localhost:3000/recipients/get-all');
+          if (recipientsRes.ok) {
+            const recipients = await recipientsRes.json();
+            subCategories = recipients.map((recipient: any) => ({
+              _id: recipient._id,
+              name: recipient.name,
+              slug: recipient.slug,
+              description: recipient.description,
+              image: recipient.image || '/images/day-out.jpg',
+              experienceCount: 0 // This would need to be fetched separately
+            }));
+          } else {
+            subCategories = fallbackSubcategories.recipients;
+          }
+          categoryTitle = 'For Everyone';
+          categoryDescription = 'Tailored experiences for different people and preferences';
+          break;
+
+        default:
+          notFound();
+      }
+    } catch (apiError) {
+      console.warn('API not available, using fallback data:', apiError);
+      // Use fallback data if API is not available
+      switch (slug) {
+        case 'activities':
+          subCategories = fallbackSubcategories.activities;
+          categoryTitle = 'Activities & Adventures';
+          categoryDescription = 'Discover exciting activities and adventures for every thrill-seeker';
+          break;
+        case 'occasions':
+          subCategories = fallbackSubcategories.occasions;
+          categoryTitle = 'Special Occasions';
+          categoryDescription = 'Perfect experiences for birthdays, anniversaries, and special moments';
+          break;
+        case 'recipients':
+          subCategories = fallbackSubcategories.recipients;
+          categoryTitle = 'For Everyone';
+          categoryDescription = 'Tailored experiences for different people and preferences';
+          break;
+        default:
+          notFound();
+      }
+    }
+
+    if (subCategories.length === 0) {
       notFound();
     }
 
-    const data: CategoryExperiencesResponse = await response.json();
-
-    // Transform API experiences to Listing format for CategoryPage component
-    const transformExperiencesToListings = (experiences: ApiExperience[]): Listing[] => {
-      return experiences.map((exp) => ({
-        id: exp._id,
-        slug: exp.slug,
-        imageSrc: exp.images[0] || '/images/placeholder.jpg',
-        title: exp.title,
-        location: `${exp.location.city}, ${exp.location.state}`,
-        duration: `${exp.duration} minutes`,
-        price: `${exp.price.currency} ${exp.price.amount}`,
-        activity: exp.category.name,
-        recipient: 'All ages',
-        occasion: 'Any occasion',
-      }));
-    };
-
-    const listings = transformExperiencesToListings(data.experiences);
-
     return (
-      <CategoryPage
-        title={data.category.name}
-        description={data.category.description}
-        image={data.category.image}
-        results={data.pagination.totalExperiences}
-        listings={listings}
-        loading={false}
-      />
+      <div className="container mx-auto px-4 py-12">
+        <SectionHeader
+          title={categoryTitle}
+          subtitle={categoryDescription}
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {subCategories.map((subCategory) => (
+            <CategoryCard
+              key={subCategory._id}
+              title={subCategory.name}
+              experiences={`${subCategory.experienceCount}+ experiences`}
+              image={subCategory.image}
+              endpoint={`/experiences/subcategory/${slug}/${subCategory.slug}`}
+            />
+          ))}
+        </div>
+      </div>
     );
   } catch (error) {
     console.error('Error pre-fetching category data:', error);

@@ -12,7 +12,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error('Category page error:', error);
+    console.error('Experiences page error:', error);
   }, [error]);
 
   return (
@@ -22,7 +22,7 @@ export default function Error({
           Something went wrong!
         </h2>
         <p className="text-gray-600 mb-6">
-          We encountered an error while loading the category. Please try again.
+          We encountered an error while loading the experiences. Please try again.
         </p>
         <div className="space-x-4">
           <Button
@@ -32,11 +32,11 @@ export default function Error({
             Try again
           </Button>
           <Button
-            onClick={() => window.location.href = '/experiences'}
+            onClick={() => window.location.href = '/'}
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-50"
           >
-            Go back to experiences
+            Go back to homepage
           </Button>
         </div>
       </div>

@@ -1,208 +1,179 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { SearchBar } from "@/components/SearchBar";
-import ListingCard from "@/components/ListingCard";
-import { ApiExperience } from "@/types";
+import { useEffect, useState } from "react";
+import SectionHeader from "@/components/SectionHeader";
+import CategoryCard from "@/components/landing/ProductCard";
 
-interface PagedExperiencesResponse {
-  metadata: Array<{ total: number; page: number }>;
-  data: ApiExperience[];
+interface MainCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  experienceCount: number;
 }
 
-const AllExperiences = () => {
-  const [experiences, setExperiences] = useState<ApiExperience[]>([]);
+export default function ExperiencesPage() {
+  const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState<{
-    [key: string]: string[];
-  }>({});
-  const [pagination, setPagination] = useState({
-    pageIndex: 1,
-    pageSize: 12,
-    total: 0,
-  });
-
-  const fetchExperiences = useCallback(async (filters = {}) => {
-    try {
-      setLoading(true);
-      console.log("Fetching experiences with filters:", filters);
-      
-      const requestBody = {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        sortField: "createdAt",
-        sortOrder: -1,
-        filters: {
-          searchText: searchQuery || "",
-          archived: false,
-          status: true,
-          activities: selectedFilters.activities || [],
-          recipients: selectedFilters.recipients || [],
-          occassions: selectedFilters.occassions || [],
-          ...filters,
-        },
-      };
-
-      const response = await fetch(`/api/experiences`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: PagedExperiencesResponse[] = await response.json();
-      const data = result[0]; // The API returns an array with one object containing metadata and data
-      
-      if (data && data.data) {
-        setExperiences(data.data);
-        setPagination(prev => ({
-          ...prev,
-          total: data.metadata[0]?.total || 0,
-        }));
-      } else {
-        setExperiences([]);
-        setPagination(prev => ({ ...prev, total: 0 }));
-      }
-    } catch (error) {
-      console.error("Error fetching experiences:", error);
-      setExperiences([]);
-      setPagination(prev => ({ ...prev, total: 0 }));
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.pageIndex, pagination.pageSize, searchQuery]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchExperiences();
-  }, [fetchExperiences, selectedFilters]);
+    const fetchMainCategories = async () => {
+      try {
+        setLoading(true);
+        
+        // Define fallback categories in case API fails
+        const fallbackCategories: MainCategory[] = [
+          {
+            _id: 'activities',
+            name: 'Activities',
+            slug: 'activities',
+            description: 'Discover exciting activities and adventures',
+            image: '/images/adventure-getaway.jpg',
+            experienceCount: 25
+          },
+          {
+            _id: 'occasions',
+            name: 'Occasions',
+            slug: 'occasions',
+            description: 'Perfect experiences for special occasions',
+            image: '/images/romantic-dinners.jpg',
+            experienceCount: 18
+          },
+          {
+            _id: 'recipients',
+            name: 'Recipients',
+            slug: 'recipients',
+            description: 'Tailored experiences for different people',
+            image: '/images/day-out.jpg',
+            experienceCount: 32
+          }
+        ];
 
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-    setPagination(prev => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+        try {
+          // Try to fetch from API first
+          const [activitiesRes, occasionsRes, recipientsRes] = await Promise.all([
+            fetch('http://localhost:3000/activities/get-all'),
+            fetch('http://localhost:3000/occasions/get-all'),
+            fetch('http://localhost:3000/recipients/get-all')
+          ]);
+
+          if (activitiesRes.ok && occasionsRes.ok && recipientsRes.ok) {
+            const [activities, occasions, recipients] = await Promise.all([
+              activitiesRes.json(),
+              occasionsRes.json(),
+              recipientsRes.json()
+            ]);
+
+            // Transform to main categories format with real counts
+            const categories: MainCategory[] = [
+              {
+                _id: 'activities',
+                name: 'Activities',
+                slug: 'activities',
+                description: 'Discover exciting activities and adventures',
+                image: '/images/adventure-getaway.jpg',
+                experienceCount: activities.length || 0
+              },
+              {
+                _id: 'occasions',
+                name: 'Occasions',
+                slug: 'occasions',
+                description: 'Perfect experiences for special occasions',
+                image: '/images/romantic-dinners.jpg',
+                experienceCount: occasions.length || 0
+              },
+              {
+                _id: 'recipients',
+                name: 'Recipients',
+                slug: 'recipients',
+                description: 'Tailored experiences for different people',
+                image: '/images/day-out.jpg',
+                experienceCount: recipients.length || 0
+              }
+            ];
+
+            setMainCategories(categories);
+          } else {
+            // If API fails, use fallback data
+            setMainCategories(fallbackCategories);
+          }
+        } catch (apiError) {
+          console.warn('API not available, using fallback data:', apiError);
+          // Use fallback data if API is not available
+          setMainCategories(fallbackCategories);
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error("Error setting up categories:", err);
+        setError("Failed to load categories. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMainCategories();
   }, []);
 
-  const handleFilterChange = (filter: string, selectedOptions: string[]) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [filter]: selectedOptions,
-    }));
-    setPagination(prev => ({ ...prev, pageIndex: 1 })); // Reset to first page on filter change
-  };
-
-  // Transform API experiences to Listing format for ListingCard component
-  const transformExperiencesToListings = (experiences: ApiExperience[]) => {
-    return experiences.map((exp) => ({
-      id: exp._id,
-      slug: exp.slug,
-      imageSrc: exp.images?.[0] || '/images/placeholder.jpg',
-      title: exp.title,
-      location: exp.location ? `${exp.location.city}, ${exp.location.state}` : 'Location not specified',
-      duration: exp.duration ? `${exp.duration} minutes` : 'Duration not specified',
-      price: exp.price ? `${exp.price.currency} ${exp.price.amount}` : 'Price not specified',
-      activity: exp.category?.name || 'Experience',
-      recipient: 'All ages',
-      occasion: 'Any occasion',
-    }));
-  };
-
-  const filteredExperiences = experiences.filter((experience) => {
-    const matchesFilters = Object.entries(selectedFilters).every(
-      ([filter, selectedOptions]) => {
-        if (selectedOptions.length === 0) return true;
-        
-        switch (filter) {
-          case "Location":
-            if (!experience.location) return false;
-            return selectedOptions.some(option => 
-              experience.location.city.toLowerCase().includes(option.toLowerCase()) ||
-              experience.location.state.toLowerCase().includes(option.toLowerCase())
-            );
-          case "Price":
-            if (!experience.price) return false;
-            const priceValue = experience.price.amount;
-            return selectedOptions.some((option) => {
-              const [min, max] = option
-                .split(" - ")
-                .map((v) => parseInt(v.replace(/[^0-9]/g, "")));
-              return max
-                ? priceValue >= min && priceValue <= max
-                : priceValue >= min;
-            });
-          case "activities":
-            if (!experience.activities || experience.activities.length === 0) return false;
-            return selectedOptions.some(option => 
-              experience.activities.includes(option)
-            );
-          case "recipients":
-            if (!experience.recipients || experience.recipients.length === 0) return false;
-            return selectedOptions.some(option => 
-              experience.recipients.includes(option)
-            );
-          case "occassions":
-            if (!experience.occassions || experience.occassions.length === 0) return false;
-            return selectedOptions.some(option => 
-              experience.occassions.includes(option)
-            );
-          default:
-            return true;
-        }
-      }
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <SectionHeader
+          title="Explore Unique Experiences in Sri Lanka"
+          subtitle="Discover and gift unforgettable day-outs, eat-outs, and more crafted to make every moment special."
+        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[...Array(3)].map((_, index) => (
+            <div
+              key={index}
+              className="bg-gray-200 rounded-lg h-80 animate-pulse"
+            ></div>
+          ))}
+        </div>
+      </div>
     );
+  }
 
-    return matchesFilters;
-  });
-
-  const listings = transformExperiencesToListings(filteredExperiences);
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <SectionHeader
+          title="Explore Unique Experiences in Sri Lanka"
+          subtitle="Discover and gift unforgettable day-outs, eat-outs, and more crafted to make every moment special."
+        />
+        <div className="text-center py-8">
+          <p className="text-red-600">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
-      {/* Search Bar */}
-      <div className="w-full mb-8">
-        <SearchBar
-          onSearchChange={handleSearchChange}
-          onFilterChange={handleFilterChange}
-        />
+      <SectionHeader
+        title="Explore Unique Experiences in Sri Lanka"
+        subtitle="Discover and gift unforgettable day-outs, eat-outs, and more crafted to make every moment special."
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {mainCategories.map((category) => (
+          <CategoryCard
+            key={category._id}
+            title={category.name}
+            experiences={`${category.experienceCount}+ experiences`}
+            image={category.image}
+            endpoint={`/experiences/category/${category.slug}`}
+          />
+        ))}
       </div>
-
-      {/* Listings Section */}
-      {loading ? (
-        <p className="text-center text-gray-500">Loading experiences...</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
-          {listings.map((listing) => {
-            console.log("Rendering listing card with ID:", listing.id);
-            return (
-              <ListingCard
-                key={listing.id}
-                slug={listing.slug}
-                id={listing.id}
-                imageSrc={listing.imageSrc}
-                altText={listing.title}
-                title={listing.title}
-                location={listing.location}
-                duration={listing.duration}
-                price={listing.price}
-                isFavorite={false}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Pagination Info */}
-      {!loading && (
-        <div className="mt-8 text-center text-gray-600">
-          Showing {listings.length} of {pagination.total} experiences
-        </div>
-      )}
     </div>
   );
-};
-
-export default AllExperiences;
+}
