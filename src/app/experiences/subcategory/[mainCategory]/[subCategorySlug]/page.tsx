@@ -19,6 +19,7 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
     let subcategoryId = subCategorySlug;
     let subcategoryName = subCategorySlug;
     let subcategoryDescription = `Experiences in ${subCategorySlug}`;
+    let subcategoryImage = '/images/placeholder.jpg'; // Default fallback image
 
     try {
       // Try to get the subcategory by slug first
@@ -30,6 +31,8 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
           subcategoryId = subcategory._id;
           subcategoryName = subcategory.name;
           subcategoryDescription = subcategory.description;
+          // Use the actual subcategory image if available
+          subcategoryImage = subcategory.image || '/images/placeholder.jpg';
         }
       }
     } catch (error) {
@@ -53,7 +56,7 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
         <CategoryPage
           title={subcategoryName}
           description={subcategoryDescription}
-          image="/images/placeholder.jpg"
+          image={subcategoryImage}
           results={0}
           listings={[]}
           loading={false}
@@ -83,7 +86,7 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
       <CategoryPage
         title={subcategoryName}
         description={subcategoryDescription}
-        image="/images/placeholder.jpg"
+        image={subcategoryImage}
         results={listings.length}
         listings={listings}
         loading={false}
