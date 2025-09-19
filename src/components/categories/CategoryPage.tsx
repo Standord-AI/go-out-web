@@ -47,6 +47,7 @@ export const CategoryPage: FC<CategoryPageProps> = ({
             listings.map((listing) => (
               <ListingCard
                 key={listing.id}
+                slug={listing.slug}
                 id={listing.id}
                 imageSrc={listing.imageSrc}
                 altText={listing.title}

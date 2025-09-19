@@ -3,41 +3,35 @@
 import SectionHeader from "../SectionHeader";
 import CategoryCard from "./ProductCard";
 
-interface Category {
-  title: string;
-  experiences: string;
-  image: string;
-  endpoint?: string;
-}
-
-const categories: Category[] = [
-  {
-    title: "Day-outs",
-    experiences: "60+ experiences",
-    image: "/images/day-out.jpg",
-    endpoint: "day-outs",
-  },
-  {
-    title: "Adventure Getaways",
-    experiences: "40+ experiences",
-    image: "/images/adventure-getaway.jpg",
-    endpoint: "adventures",
-  },
-  {
-    title: "Romantic Dinner Dates",
-    experiences: "30+ experiences",
-    image: "/images/dinner-dates.jpg",
-    endpoint: "dinner-outs",
-  },
-  {
-    title: "Luxury High Teas",
-    experiences: "25+ experiences",
-    image: "/images/high-teas.jpg",
-    endpoint: "high-teas",
-  },
-];
-
 export default function CategoriesSection() {
+  // Define the 3 main categories
+  const mainCategories = [
+    {
+      _id: 'activities',
+      name: 'Activities',
+      slug: 'activities',
+      description: 'Discover exciting activities and adventures',
+      image: '/images/adventure-getaway.jpg',
+      experienceCount: 25
+    },
+    {
+      _id: 'occasions',
+      name: 'Occasions',
+      slug: 'occasions',
+      description: 'Perfect experiences for special occasions',
+      image: '/images/romantic-dinners.jpg',
+      experienceCount: 18
+    },
+    {
+      _id: 'recipients',
+      name: 'Recipients',
+      slug: 'recipients',
+      description: 'Tailored experiences for different people',
+      image: '/images/day-out.jpg',
+      experienceCount: 32
+    }
+  ];
+
   return (
     <section className="container mx-auto px-6 py-12">
       {/* Title */}
@@ -46,14 +40,14 @@ export default function CategoriesSection() {
         subtitle="Discover and gift unforgettable day-outs, eat-outs, and more crafted to make every moment special."
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {categories.map((category, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {mainCategories.map((category) => (
           <CategoryCard
-            key={index}
-            title={category.title}
-            experiences={category.experiences}
+            key={category._id}
+            title={category.name}
+            experiences={`${category.experienceCount}+ experiences`}
             image={category.image}
-            endpoint={category.endpoint}
+            endpoint={`/experiences/category/${category.slug}`}
           />
         ))}
       </div>

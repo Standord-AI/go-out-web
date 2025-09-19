@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { FiMenu, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { CartIcon } from "./CartIcon";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,14 +15,9 @@ export function Navbar() {
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo Section */}
-        <div className="flex items-center gap-2">
-          <div className="relative h-8 w-8 bg-black rounded-full overflow-hidden">
-            <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
-              G
-            </div>
-          </div>
-          <span className="font-semibold text-xl">GoOut</span>
-        </div>
+        <Link href="/">
+          <Image src="/logo/logo-long.png" alt="GoOut" width={100} height={32} />
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
@@ -37,6 +34,7 @@ export function Navbar() {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-4">
+          <CartIcon />
           <Button variant="outline" size="sm">
             Log in
           </Button>
@@ -76,7 +74,8 @@ export function Navbar() {
               {/* Navigation Links */}
               <NavLinks />
 
-              {/* Auth Buttons */}
+              {/* Cart and Auth Buttons */}
+              <CartIcon className="w-full" />
               <Button variant="outline" size="sm">
                 Log in
               </Button>

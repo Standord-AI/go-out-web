@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Gift } from "lucide-react";
+import { Gift, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,21 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { CartItem } from "@/types";
+import { useRouter } from "next/navigation";
 
 interface BookingFormProps {
+  experienceId: string;
+  title: string;
+  image: string;
   price: string;
+  location: {
+    city: string;
+    country: string;
+  };
+  duration: string;
+  maxParticipants: number;
   onBooking?: (data: BookingData) => void;
   showTimeSelector?: boolean;
   timeIntervals?: number[]; // Time intervals in minutes, e.g. [30, 60, 120]
@@ -39,7 +51,13 @@ export interface BookingData {
 }
 
 export function BookingForm({
+  experienceId,
+  title,
+  image,
   price,
+  location,
+  duration,
+  maxParticipants,
   onBooking,
   showTimeSelector = false,
   timeIntervals = [60], // Default 1 hour
@@ -49,6 +67,8 @@ export function BookingForm({
   const [quantity, setQuantity] = useState(1);
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>();
+  const { addItem, isInCart } = useCart();
+  const router = useRouter();
   
   // Format price to number for calculations
   const priceValue = parseFloat(price.replace(/[^0-9.]/g, ''));
@@ -117,6 +137,30 @@ export function BookingForm({
       });
     }
   };
+
+  // Handle add to cart
+  const handleAddToCart = () => {
+    if (!date) return;
+
+    const cartItem: CartItem = {
+      id: `${experienceId}-${date.toISOString()}-${time || 'default'}`,
+      experienceId,
+      title,
+      image,
+      price: priceValue,
+      currency: 'USD',
+      quantity,
+      date,
+      time,
+      location,
+      duration,
+      maxParticipants
+    };
+
+    addItem(cartItem);
+  };
+
+  const isAlreadyInCart = isInCart(experienceId);
 
   return (
     <Card className="p-6 shadow-lg rounded-lg sticky top-24">
@@ -257,18 +301,20 @@ export function BookingForm({
 
           <Button 
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3"
-            onClick={handleBooking}
+            onClick={handleAddToCart}
             disabled={!date || (showTimeSelector && !time)}
           >
-            Book this experience
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {isAlreadyInCart ? 'Already in Cart' : 'Add to Cart'}
           </Button>
 
           <Button
             variant="outline"
             className="w-full border-orange-500 text-orange-500 hover:bg-orange-50 py-3"
+            onClick={() => router.push('/cart')}
           >
             <Gift className="mr-2 h-4 w-4" />
-            Buy this as a gift
+            View Cart ({quantity})
           </Button>
         </div>
       </CardContent>
