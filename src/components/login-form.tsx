@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,70 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const router = useRouter();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+    setIsError(false);
+
+    try {
+      if (!email || !password) {
+        throw new Error("Please enter both email and password");
+      }
+
+      const response = await fetch("/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed. Please try again.");
+      }
+
+      setMessage("Login successful! Redirecting to dashboard...");
+      setIsError(false);
+
+      // Store user data in context
+      login(data.user);
+
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        router.push("/experiences");
+      }, 1500);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please try again."
+      );
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -30,7 +86,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -58,20 +114,40 @@ export function LoginForm({
                 </span>
               </div>
               <div className="grid gap-6">
+                {message && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 p-3 rounded-md text-xs border font-medium",
+                      isError
+                        ? "bg-red-100 text-destructive border-destructive/10"
+                        : "bg-emerald-100 text-emerald-700 border-emerald-900/10"
+                    )}
+                  >
+                    {isError ? (
+                      <AlertCircle className="size-4 text-destructive" />
+                    ) : (
+                      <CheckCircle2 className="size-4 text-emerald-700" />
+                    )}
+                    {message}
+                  </div>
+                )}
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="john.doe@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
                     <a
-                      href="#"
+                      href="/auth/forgot-password"
                       className="ml-auto text-sm underline-offset-4 hover:underline"
                     >
                       Forgot your password?
@@ -82,7 +158,10 @@ export function LoginForm({
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="********"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -97,13 +176,20 @@ export function LoginForm({
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="w-full">
-                  Login
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Signing in...
+                    </div>
+                  ) : (
+                    "Sign in"
+                  )}
                 </Button>
               </div>
-              <div className="text-center text-sm">
+              <div className="text-center text-sm mt-1">
                 Don&apos;t have an account?{" "}
-                <a href="/signup" className="underline underline-offset-4">
+                <a href="/auth/signup" className="underline underline-offset-4">
                   Sign up
                 </a>
               </div>

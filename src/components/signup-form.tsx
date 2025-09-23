@@ -11,14 +11,93 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+    setIsError(false);
+
+    try {
+      // Validate passwords match
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      // Validate required fields
+      if (!formData.firstName || !formData.email || !formData.password) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      // Prepare user data for backend
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      const response = await fetch("/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed. Please try again.");
+      }
+
+      setMessage("Account created successfully! Redirecting to login...");
+      setIsError(false);
+
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Signup failed. Please try again."
+      );
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -30,7 +109,7 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -58,13 +137,59 @@ export function SignupForm({
                 </span>
               </div>
               <div className="grid gap-6">
+                {message && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 p-3 rounded-md text-xs border font-medium",
+                      isError
+                        ? "bg-red-100 text-destructive border-destructive/10"
+                        : "bg-emerald-100 text-emerald-700 border-emerald-900/10"
+                    )}
+                  >
+                    {isError ? (
+                      <AlertCircle className="size-4 text-destructive" />
+                    ) : (
+                      <CheckCircle2 className="size-4 text-emerald-700" />
+                    )}
+                    {message}
+                  </div>
+                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    placeholder="John"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                  />
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="john.doe@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -74,9 +199,13 @@ export function SignupForm({
                   <div className="relative">
                     <Input
                       id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="********"
+                      value={formData.password}
+                      onChange={handleInputChange}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -98,9 +227,13 @@ export function SignupForm({
                   <div className="relative">
                     <Input
                       id="confirmPassword"
+                      name="confirmPassword"
                       type={showPassword ? "text" : "password"}
                       placeholder="********"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -115,13 +248,20 @@ export function SignupForm({
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="w-full">
-                  Sign up
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Signing up...
+                    </div>
+                  ) : (
+                    "Sign up"
+                  )}
                 </Button>
               </div>
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <a href="/login" className="underline underline-offset-4">
+                <a href="/auth/login" className="underline underline-offset-4">
                   Login
                 </a>
               </div>
