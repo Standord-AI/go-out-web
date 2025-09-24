@@ -16,7 +16,12 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo Section */}
         <Link href="/">
-          <Image src="/logo/logo-long.png" alt="GoOut" width={100} height={32} />
+          <Image
+            src="/logo/logo-long.png"
+            alt="GoOut"
+            width={100}
+            height={32}
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -35,10 +40,14 @@ export function Navbar() {
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-4">
           <CartIcon />
-          <Button variant="outline" size="sm">
-            Log in
-          </Button>
-          <Button size="sm">Sign up</Button>
+          <Link href="/auth/login">
+            <Button variant="outline" size="sm">
+              Log in
+            </Button>
+          </Link>
+          <Link href="/auth/signup">
+            <Button size="sm">Sign up</Button>
+          </Link>
         </div>
       </div>
 
@@ -76,10 +85,14 @@ export function Navbar() {
 
               {/* Cart and Auth Buttons */}
               <CartIcon className="w-full" />
-              <Button variant="outline" size="sm">
-                Log in
-              </Button>
-              <Button size="sm">Sign up</Button>
+              <Link href="/auth/login">
+                <Button variant="outline" size="sm">
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/auth/signup">
+                <Button size="sm">Sign up</Button>
+              </Link>
             </motion.div>
           </>
         )}
