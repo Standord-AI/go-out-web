@@ -9,7 +9,7 @@ import { OverviewTab } from "./tabs/OverviewTab";
 import { ImportantInfoTab } from "./tabs/ImportantInfoTab";
 import { LocationTab } from "./tabs/LocationTab";
 import { ReviewsTab } from "./tabs/ReviewsTab";
-import { ApiExperience } from "@/types";
+import { ApiExperience, ApiTime } from "@/types";
 
 interface ExperienceDetailsProps {
   experienceId: string;
@@ -137,7 +137,7 @@ export default function ExperienceDetails({
 
   // Mock booked dates and times (you can integrate this with your booking API later)
   const bookedDates: Date[] = [];
-  const bookedTimes: { date: Date; times: string[] }[] = [];
+  const bookedTimes: { date: Date; times: ApiTime[] }[] = [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -153,16 +153,16 @@ export default function ExperienceDetails({
           experienceId={experience._id}
           title={experience.title}
           image={experience.images[0]}
-          price={formatPrice(experience.price)}
           location={{
             city: experience.location.city,
             country: experience.location.country
           }}
-          duration={formatDuration(experience.duration)}
           maxParticipants={experience.maxParticipants}
           onBooking={handleBooking}
           showTimeSelector={true}
-          timeIntervals={[30, 60, 120]} // 30 mins, 1 hour, 2 hours
+          rates={experience.rates}
+          availableDates={experience.availableDates.dates}
+          availableTimes={experience.availableTimes.times}
           bookedDates={bookedDates}
           bookedTimes={bookedTimes}
         />
@@ -172,7 +172,7 @@ export default function ExperienceDetails({
       <HeaderInfo
         title={experience.title}
         location={formatLocation(experience.location)}
-        duration={formatDuration(experience.duration)}
+        duration={formatDuration(Math.min(...experience.rates.map((rate) => rate.duration)))}
       />
 
       {/* Tabs for different sections */}
@@ -190,7 +190,7 @@ export default function ExperienceDetails({
             description={experience.description}
             highlights={experience.highlights}
             included={experience.inclusions}
-            sessionLength={formatDuration(experience.duration)}
+            sessionLength={formatDuration(Math.min(...experience.rates.map((rate) => rate.duration)))}
           />
         </TabsContent>
 
