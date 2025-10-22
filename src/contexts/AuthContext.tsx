@@ -1,27 +1,24 @@
 "use client";
 
 import * as React from "react";
-
-interface User {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  isActive: boolean;
-}
+import type { User as ApiUser } from "@/types";
+type AuthUser = Pick<
+  ApiUser,
+  "_id" | "firstName" | "lastName" | "email" | "isVerified"
+>;
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (userData: User) => void;
+  login: (userData: AuthUser) => void;
   logout: () => void;
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -38,16 +35,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: AuthUser) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
     localStorage.removeItem("user");
-    // Clear JWT cookie by setting it to expire
-    document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    try {
+      await fetch("/api/users/logout", { method: "POST" });
+    } catch {}
   };
 
   const value = {

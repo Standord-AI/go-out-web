@@ -17,7 +17,7 @@ import {
   Eye,
   EyeOff,
   Mail,
-  XCircleIcon,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -82,7 +82,11 @@ export function ResetPasswordForm({
         }),
       });
 
-      const data = await response.json();
+      let data: any = null;
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        data = await response.json().catch(() => null);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to reset password");
@@ -118,7 +122,7 @@ export function ResetPasswordForm({
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 items-center">
-              <XCircleIcon className="size-10 text-destructive" />
+              <XCircle className="size-10 text-destructive" />
               <p className="text-muted-foreground font-medium text-sm">
                 The password reset link is invalid or has expired.
               </p>

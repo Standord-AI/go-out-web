@@ -16,7 +16,11 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const data = await response.json();
+    let data: any = null;
+    const ct = response.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      data = await response.json().catch(() => null);
+    }
 
     if (!response.ok) {
       return NextResponse.json(

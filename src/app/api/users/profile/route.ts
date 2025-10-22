@@ -19,12 +19,22 @@ export async function GET(request: NextRequest) {
       {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
+          ...(request.headers.get("cookie")
+            ? { cookie: request.headers.get("cookie") as string }
+            : {}),
+          ...(request.headers.get("authorization")
+            ? { authorization: request.headers.get("authorization") as string }
+            : {}),
         },
+        cache: "no-store",
       }
     );
 
-    const data = await response.json();
+    let data: any = null;
+    const ct = response.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      data = await response.json().catch(() => null);
+    }
 
     if (!response.ok) {
       return NextResponse.json(
@@ -63,8 +73,15 @@ export async function PUT(request: NextRequest) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...(request.headers.get("cookie")
+            ? { cookie: request.headers.get("cookie") as string }
+            : {}),
+          ...(request.headers.get("authorization")
+            ? { authorization: request.headers.get("authorization") as string }
+            : {}),
         },
         body: JSON.stringify(body),
+        cache: "no-store",
       }
     );
 

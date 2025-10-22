@@ -22,7 +22,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data, { status: 201 });
+    const responseHeaders = new Headers();
+    const setCookie = response.headers.get("set-cookie");
+    if (setCookie) {
+      responseHeaders.set("set-cookie", setCookie);
+    }
+
+    return NextResponse.json(data, {
+      status: response.status,
+      headers: responseHeaders,
+    });
   } catch (error) {
     console.error("Registration API error:", error);
     return NextResponse.json(

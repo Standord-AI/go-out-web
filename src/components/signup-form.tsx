@@ -12,8 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function SignupForm({
   className,
@@ -32,6 +33,15 @@ export function SignupForm({
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const redirectTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -60,9 +70,9 @@ export function SignupForm({
 
       // Prepare user data for backend
       const userData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
         password: formData.password,
       };
 
@@ -74,18 +84,21 @@ export function SignupForm({
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.error || "Registration failed. Please try again.");
+        const msg =
+          typeof data?.error === "string" && data.error.length <= 140
+            ? data.error
+            : "Registration failed. Please try again.";
+        throw new Error(msg);
       }
 
       setMessage("Account created successfully! Redirecting to login...");
       setIsError(false);
 
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        router.push("/login");
+      redirectTimeoutRef.current = window.setTimeout(() => {
+        router.push("/auth/login");
       }, 2000);
     } catch (error) {
       setMessage(
@@ -139,6 +152,9 @@ export function SignupForm({
               <div className="grid gap-6">
                 {message && (
                   <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
                     className={cn(
                       "flex items-center gap-2 p-3 rounded-md text-xs border font-medium",
                       isError
@@ -161,6 +177,7 @@ export function SignupForm({
                     name="firstName"
                     type="text"
                     placeholder="John"
+                    autoComplete="given-name"
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
@@ -168,12 +185,13 @@ export function SignupForm({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
                     name="lastName"
                     type="text"
                     placeholder="Doe"
+                    autoComplete="family-name"
                     value={formData.lastName}
                     onChange={handleInputChange}
                     disabled={isLoading}
@@ -186,6 +204,7 @@ export function SignupForm({
                     name="email"
                     type="email"
                     placeholder="john.doe@example.com"
+                    autoComplete="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -202,6 +221,7 @@ export function SignupForm({
                       name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="********"
+                      autoComplete="new-password"
                       value={formData.password}
                       onChange={handleInputChange}
                       required
@@ -211,6 +231,10 @@ export function SignupForm({
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      aria-pressed={showPassword}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -230,6 +254,7 @@ export function SignupForm({
                       name="confirmPassword"
                       type={showPassword ? "text" : "password"}
                       placeholder="********"
+                      autoComplete="new-password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
@@ -261,9 +286,12 @@ export function SignupForm({
               </div>
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <a href="/auth/login" className="underline underline-offset-4">
+                <Link
+                  href="/auth/login"
+                  className="underline underline-offset-4"
+                >
                   Login
-                </a>
+                </Link>
               </div>
             </div>
           </form>

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Mail } from "lucide-react";
+import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
 import { useState } from "react";
 
 export function ForgotPasswordForm({
@@ -47,7 +47,7 @@ export function ForgotPasswordForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failked to process request");
+        throw new Error(data.error || "Failed to process request");
       }
 
       setMessage(

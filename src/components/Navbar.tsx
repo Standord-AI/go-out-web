@@ -40,14 +40,12 @@ export function Navbar() {
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-4">
           <CartIcon />
-          <Link href="/auth/login">
-            <Button variant="outline" size="sm">
-              Log in
-            </Button>
-          </Link>
-          <Link href="/auth/signup">
-            <Button size="sm">Sign up</Button>
-          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/auth/login">Log in</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/auth/signup">Sign up</Link>
+          </Button>
         </div>
       </div>
 
@@ -85,14 +83,16 @@ export function Navbar() {
 
               {/* Cart and Auth Buttons */}
               <CartIcon className="w-full" />
-              <Link href="/auth/login">
-                <Button variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/auth/login" onClick={() => setMenuOpen(false)}>
                   Log in
-                </Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button size="sm">Sign up</Button>
-              </Link>
+                </Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/auth/signup" onClick={() => setMenuOpen(false)}>
+                  Sign up
+                </Link>
+              </Button>
             </motion.div>
           </>
         )}

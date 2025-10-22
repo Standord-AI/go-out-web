@@ -58,6 +58,9 @@ export function LoginForm({
       setIsError(false);
 
       // Store user data in context
+      if (!data || !data.user) {
+        throw new Error("Unexpected response from server. Please try again.");
+      }
       login(data.user);
 
       // Redirect to dashboard after a short delay
