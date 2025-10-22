@@ -20,6 +20,12 @@ interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Provides authentication state and actions (user, isAuthenticated, isLoading, login, logout) to descendant components via AuthContext.
+ *
+ * @param children - React nodes to be wrapped by the authentication provider
+ * @returns The AuthContext provider element that supplies auth state and actions to its descendants
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -61,6 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * Retrieves the authentication context for the current React component.
+ *
+ * @returns The authentication context object containing `user`, `isAuthenticated`, `isLoading`, `login`, and `logout`.
+ * @throws Error if called outside of an `AuthProvider`
+ */
 export function useAuth() {
   const context = React.useContext(AuthContext);
   if (context === undefined) {

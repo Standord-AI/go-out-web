@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+/**
+ * Handle POST requests to initiate a user password reset by forwarding the request body to the backend reset endpoint.
+ *
+ * @param request - Incoming Next.js request whose JSON body is forwarded to the backend `/users/reset-password` endpoint
+ * @returns A JSON NextResponse containing the backend response data on success (status 200), or an error object with the backend's status on failure; returns an error object with status 500 on unexpected errors
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

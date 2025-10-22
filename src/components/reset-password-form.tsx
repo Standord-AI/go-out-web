@@ -22,6 +22,15 @@ import {
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+/**
+ * Render a password reset form that validates input and submits a reset request using the `token` query parameter.
+ *
+ * The component shows an invalid-link state when no token is present, provides client-side validation (presence,
+ * minimum length, match), displays success/error messages, and redirects to the login page after a successful reset.
+ *
+ * @param className - Optional class name applied to the root container; other standard div props are spread onto the root.
+ * @returns The rendered ResetPasswordForm component element.
+ */
 export function ResetPasswordForm({
   className,
   ...props

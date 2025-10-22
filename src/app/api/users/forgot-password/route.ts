@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+/**
+ * Handle forgot-password POST requests by forwarding the request body to the backend and returning the backend's response.
+ *
+ * @param request - The incoming NextRequest whose JSON body will be proxied to the backend forgot-password endpoint.
+ * @returns A NextResponse containing the backend response data on success, or an object `{ error: string }` with an appropriate HTTP status on failure.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

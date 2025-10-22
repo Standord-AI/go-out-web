@@ -8,6 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { CartIcon } from "./CartIcon";
 
+/**
+ * Renders the site navigation header with responsive desktop links and a sliding mobile menu.
+ *
+ * The header includes a logo, navigation links, cart and authentication actions. On small screens it shows a menu button that opens a sliding sidebar with an overlay; the overlay or close button dismisses the sidebar.
+ *
+ * @returns The JSX element for the responsive navigation header
+ */
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 

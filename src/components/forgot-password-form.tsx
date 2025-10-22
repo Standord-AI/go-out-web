@@ -14,6 +14,13 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Mail } from "lucide-react";
 import { useState } from "react";
 
+/**
+ * Render a password-reset form that collects an email and sends a reset-link request.
+ *
+ * Displays an input for the user's email, a submit button with loading state, and a contextual status message (error or success). Also includes links to login, signup, Terms of Service, and Privacy Policy.
+ *
+ * @returns The rendered Forgot Password form element.
+ */
 export function ForgotPasswordForm({
   className,
   ...props

@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+/**
+ * Handle a login POST by forwarding the request body to the backend login endpoint and returning the backend's response to the client.
+ *
+ * Returns a NextResponse containing the backend response data and propagates the backend Set-Cookie header on success.
+ * If the backend responds with an error, returns a JSON error object with the backend status.
+ * If an unexpected error occurs, returns a JSON error object with HTTP status 500.
+ *
+ * @returns A NextResponse with:
+ *  - the backend JSON and propagated `Set-Cookie` header on success (HTTP 200),
+ *  - `{ error: string }` and the backend status on backend failure,
+ *  - `{ error: "Internal server error" }` with status 500 on unexpected errors.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

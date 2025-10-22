@@ -1,6 +1,11 @@
 import { ResetPasswordForm } from "@/components/reset-password-form";
 import Image from "next/image";
 
+/**
+ * Render a centered reset password page with a home-linked logo and the reset password form.
+ *
+ * @returns A React element that displays the logo (linking to "/") above the ResetPasswordForm, centered within a constrained container.
+ */
 export default function LoginPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">

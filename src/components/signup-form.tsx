@@ -15,6 +15,13 @@ import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Renders a sign-up card UI with social sign-up buttons, controlled form fields, client-side validation, and submission to the registration API.
+ *
+ * The component manages local form state (first name, last name, email, password, confirm password), loading and status messages, password visibility toggling, and redirects to the login page on successful registration.
+ *
+ * @returns A React element containing the signup form UI.
+ */
 export function SignupForm({
   className,
   ...props

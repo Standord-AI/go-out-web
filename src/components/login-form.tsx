@@ -16,6 +16,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Render a login form UI and handle user authentication.
+ *
+ * Displays email and password inputs, social login buttons, a password visibility toggle,
+ * and inline success/error messages. On submit, posts credentials to /api/users/login,
+ * stores the returned user in the auth context, and navigates to /experiences on success.
+ *
+ * @returns The login form React element
+ */
 export function LoginForm({
   className,
   ...props
