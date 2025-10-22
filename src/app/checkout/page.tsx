@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, CreditCard, Lock, Shield, CheckCircle } from "lucide-react";
+import { ArrowLeft, CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CheckoutFormData } from "@/types";
+import axios from "axios"; // Import axios
 
 type CheckoutStep = "details" | "payment" | "review" | "confirmation";
 
@@ -28,6 +28,7 @@ export default function CheckoutPage() {
     specialRequests: "",
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Add error state
 
   const steps = [
     { id: "details", title: "Contact Details" },
@@ -56,11 +57,39 @@ export default function CheckoutPage() {
 
   const handleSubmit = async () => {
     setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    setCurrentStep("confirmation");
-    clearCart();
+    setError(null);
+
+    try {
+      // Create an array of promises, one for each booking API call
+      const bookingPromises = state.items.map(item => {
+        const bookingPayload = {
+          experienceId: item.experienceId,
+          selectedDate: item.date,
+          selectedTime: item.time,
+          duration: parseInt(item.duration, 10), // Ensure duration is a number
+          quantity: item.quantity,
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phoneNumber: formData.phone,
+          specialRequests: formData.specialRequests,
+        };
+        // The backend calculates totalPayable, so we don't send it.
+        return axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings`, bookingPayload);
+      });
+
+      // Wait for all booking requests to complete
+      await Promise.all(bookingPromises);
+
+      // If all bookings are successful, proceed to confirmation
+      setIsProcessing(false);
+      setCurrentStep("confirmation");
+      clearCart();
+
+    } catch (err: any) {
+      console.error("Booking submission failed:", err);
+      setError(err.response?.data?.message || "One or more bookings could not be completed. Please check the details and try again.");
+      setIsProcessing(false);
+    }
   };
 
   const renderStepIndicator = () => (
@@ -227,8 +256,8 @@ export default function CheckoutPage() {
                 <div className="flex-1">
                   <h4 className="font-semibold">{item.title}</h4>
                   <p className="text-sm text-gray-600">
-                    {format(item.date, "PPP")}
-                    {item.time && ` at ${item.time}`}
+                    {format(new Date(item.date), "PPP")}
+                    {item.time && ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
                   </p>
                   <p className="text-sm text-gray-600">
                     Quantity: {item.quantity}
@@ -279,7 +308,7 @@ export default function CheckoutPage() {
               <span>Service Fee</span>
               <span>${state.fees.toFixed(2)}</span>
             </div>
-            <div className="border-t pt-2">
+            <div className="border-t pt-2 mt-2">
               <div className="flex justify-between font-semibold text-lg">
                 <span>Total</span>
                 <span>${state.total.toFixed(2)}</span>
@@ -300,14 +329,14 @@ export default function CheckoutPage() {
       <p className="text-gray-600 max-w-md mx-auto">
         Thank you for your booking. You will receive a confirmation email shortly with all the details.
       </p>
-      <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Button
           onClick={() => router.push("/experiences")}
-          className="bg-orange-500 hover:bg-orange-600"
+          className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
         >
           Browse More Experiences
         </Button>
-        <Button variant="outline" onClick={() => router.push("/")}>
+        <Button variant="outline" onClick={() => router.push("/")} className="w-full sm:w-auto">
           Return to Home
         </Button>
       </div>
@@ -322,18 +351,20 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Checkout</h1>
-        </div>
+        {currentStep !== 'confirmation' && (
+          <div className="flex items-center gap-4 mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="p-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Checkout</h1>
+          </div>
+        )}
 
-        {renderStepIndicator()}
+        {currentStep !== 'confirmation' && renderStepIndicator()}
 
         <div className="space-y-6">
           {currentStep === "details" && renderContactDetails()}
@@ -342,12 +373,19 @@ export default function CheckoutPage() {
           {currentStep === "confirmation" && renderConfirmation()}
         </div>
 
+        {currentStep === "review" && error && (
+          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {currentStep !== "confirmation" && (
           <div className="flex justify-between mt-8">
             <Button
               variant="outline"
               onClick={handleBack}
-              disabled={currentStep === "details"}
+              disabled={currentStep === "details" || isProcessing}
             >
               Back
             </Button>

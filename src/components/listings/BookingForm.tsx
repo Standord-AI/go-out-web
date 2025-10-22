@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,15 +39,15 @@ interface BookingFormProps {
   rates?: ApiRate[];
   availableDates?: Date[];
   availableTimes?: ApiTime[];
-  bookedDates?: Date[]; // Dates that are already booked
-  bookedTimes?: { date: Date; times: ApiTime[] }[]; // Times that are already booked on specific dates
+  onDateChange: (date: Date) => void; // Callback to fetch availability
+  isDateFullyBooked: boolean;
 }
 
 export interface BookingData {
   quantity: number;
   date: Date | undefined;
   time?: ApiTime;
-  totalPrice: string;
+  duration: number;
 }
 
 export function BookingForm({
@@ -61,101 +61,81 @@ export function BookingForm({
   rates = [],
   availableDates = [],
   availableTimes = [],
-  bookedDates = [],
-  bookedTimes = [],
+  onDateChange,
+  isDateFullyBooked,
 }: BookingFormProps) {
   const [quantity, setQuantity] = useState(1);
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<ApiTime>();
-  const [priceValue, setPriceValue] = useState<ApiPrice>(
+  const [selectedRate, setSelectedRate] = useState<ApiRate | undefined>(
     rates.find(
-      (i) => i.duration === Math.min(...rates.map((rate) => rate.duration))
-    )!.price
+      (r) => r.duration === Math.min(...rates.map((rate) => rate.duration))
+    )
   );
-  const [duration, setDuration] = useState<string>("");
   const { addItem, isInCart } = useCart();
   const router = useRouter();
 
-  const handleSelect = (duration: string) => {
-    const [index, newDuration] = duration.split("-");
-    setDuration(newDuration);
-    setPriceValue(rates[parseInt(index)].price);
-  };
-
-  bookedDates = [new Date("2025-09-30")];
-
-  // Get available time slots for selected date
-  const getAvailableTimeSlots = () => {
-    if (!date) return [];
-
-    // Filter out booked times for the selected date
-    const bookedTimesForDate = bookedTimes.find(
-      (bookingDate) => bookingDate.date.toDateString() === date.toDateString()
-    );
-
-    if (bookedTimesForDate) {
-      return availableTimes.filter(
-        (slot) =>
-          !bookedTimesForDate.times.some(
-            (t) =>
-              t.hour === slot.hour &&
-              t.minute === slot.minute &&
-              t.period === slot.period
-          )
-      );
+  useEffect(() => {
+    // Reset time when date changes
+    setTime(undefined);
+    if (date) {
+      onDateChange(date);
     }
+  }, [date]);
 
-    return availableTimes;
+  const handleRateSelect = (rateString: string) => {
+    const rate = rates.find((r) => r.duration === parseInt(rateString));
+    setSelectedRate(rate);
   };
 
-  //Check if date is unavailable as marked by vendor
-  const isDateUnavailable = (date: Date) => {
-    return availableDates.some((d) => d.toDateString === date.toDateString);
-  };
-
-  // Check if a date is disabled (fully booked)
-  const isDateBooked = (date: Date) => {
-    return bookedDates.some(
-      (bookedDate) => bookedDate.toDateString() === date.toDateString()
+  // Check if a date is disabled (not in the available list)
+  const isDateUnavailable = (d: Date) => {
+    const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return !availableDates.some(
+      (availableDate) =>
+        new Date(availableDate).toDateString() === dateOnly.toDateString()
     );
   };
 
   // Calculate total price
   const calculateTotalPrice = () => {
-    return (priceValue.amount * quantity).toLocaleString("en-US", {
+    if (!selectedRate) return "N/A";
+    return (selectedRate.price.amount * quantity).toLocaleString("en-US", {
       style: "currency",
-      currency: priceValue.currency,
+      currency: selectedRate.price.currency,
     });
   };
 
   // Handle booking submission
   const handleBooking = () => {
-    if (onBooking && date) {
+    if (onBooking && date && selectedRate) {
       onBooking({
         quantity,
         date,
         time: showTimeSelector ? time : undefined,
-        totalPrice: calculateTotalPrice(),
+        duration: selectedRate.duration,
       });
     }
   };
 
   // Handle add to cart
   const handleAddToCart = () => {
-    if (!date) return;
+    if (!date || !selectedRate) return;
 
     const cartItem: CartItem = {
-      id: `${experienceId}-${date.toISOString()}-${time || "default"}`,
+      id: `${experienceId}-${date.toISOString()}-${time?.hour}:${time?.minute}${
+        time?.period
+      }`,
       experienceId,
       title,
       image,
-      price: priceValue.amount,
-      currency: priceValue.currency,
+      price: selectedRate.price.amount,
+      currency: selectedRate.price.currency,
       quantity,
       date,
       time,
       location,
-      duration,
+      duration: selectedRate.duration.toString(),
       maxParticipants,
     };
 
@@ -167,7 +147,9 @@ export function BookingForm({
   return (
     <Card className="p-6 shadow-lg rounded-lg sticky top-24">
       <CardContent className="p-0 space-y-4">
-        <div className="text-2xl font-bold">{priceValue.amount}&nbsp;{priceValue.currency}</div>
+        <div className="text-2xl font-bold">
+          {selectedRate?.price.amount}&nbsp;{selectedRate?.price.currency}
+        </div>
 
         {quantity > 1 && (
           <div className="text-sm text-gray-600">
@@ -201,10 +183,9 @@ export function BookingForm({
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  disabled={(date) =>
-                    date < new Date() ||
-                    isDateBooked(date) ||
-                    isDateUnavailable(date)
+                  disabled={(d) =>
+                    d < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                    isDateUnavailable(d)
                   }
                   initialFocus
                 />
@@ -221,23 +202,31 @@ export function BookingForm({
                 Select Available Time
               </label>
               <Select
-                onValueChange={(val) => setTime(availableTimes[parseInt(val)])}
+                onValueChange={(val) => setTime(JSON.parse(val))}
+                value={time ? JSON.stringify(time) : undefined}
+                disabled={isDateFullyBooked}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a time">
+                  <SelectValue
+                    placeholder={
+                      isDateFullyBooked ? "No times available" : "Select a time"
+                    }
+                  >
                     {time ? (
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         <span>{`${time.hour}:${time.minute} ${time.period}`}</span>
                       </div>
+                    ) : isDateFullyBooked ? (
+                      "No times available"
                     ) : (
                       "Select a time"
                     )}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableTimeSlots().map((timeSlot, index) => (
-                    <SelectItem key={index} value={`${index}`}>
+                  {availableTimes.map((timeSlot, index) => (
+                    <SelectItem key={index} value={JSON.stringify(timeSlot)}>
                       {`${timeSlot.hour}:${timeSlot.minute} ${timeSlot.period}`}
                     </SelectItem>
                   ))}
@@ -246,7 +235,7 @@ export function BookingForm({
             </div>
           )}
 
-          {rates.length > 1 && showTimeSelector && (
+          {rates.length > 0 && (
             <div>
               <label
                 htmlFor="interval"
@@ -254,21 +243,24 @@ export function BookingForm({
               >
                 Duration
               </label>
-              <Select onValueChange={(val) => handleSelect(val)}>
+              <Select
+                onValueChange={handleRateSelect}
+                defaultValue={selectedRate?.duration.toString()}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
-                  {rates.map((interval, index) => (
+                  {rates.map((rate) => (
                     <SelectItem
-                      key={index}
-                      value={`${index}-${interval.duration}`}
+                      key={rate.duration}
+                      value={rate.duration.toString()}
                     >
-                      {interval.duration >= 60
-                        ? `${interval.duration / 60} hour${
-                            interval.duration === 60 ? "" : "s"
+                      {rate.duration >= 60
+                        ? `${rate.duration / 60} hour${
+                            rate.duration === 60 ? "" : "s"
                           }`
-                        : `${interval.duration} minutes`}
+                        : `${rate.duration} minutes`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -322,11 +314,11 @@ export function BookingForm({
               max participants: {maxParticipants}
             </p>
           </div>
-
+          
           <Button
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3"
             onClick={handleAddToCart}
-            disabled={!date || (showTimeSelector && !time)}
+            disabled={!date || (showTimeSelector && !time) || isDateFullyBooked}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
             {isAlreadyInCart ? "Already in Cart" : "Add to Cart"}

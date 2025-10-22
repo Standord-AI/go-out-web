@@ -2,7 +2,8 @@
 
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import Map from "@/components/Map"; 
+import { useState, useEffect } from "react"
 
 interface LocationTabProps {
   address: string;
@@ -13,6 +14,11 @@ interface LocationTabProps {
 
 export function LocationTab({ address, googleMapsUrl, lat, lng }: LocationTabProps) {
   const [mapEmbedUrl, setMapEmbedUrl] = useState<string>("");
+
+  const eventLocation = {
+    lat: 6.934024,
+    lng: 79.846075
+  };
 
   useEffect(() => {
     if (lat && lng) {
@@ -47,23 +53,20 @@ export function LocationTab({ address, googleMapsUrl, lat, lng }: LocationTabPro
       {/* Google Maps Embed */}
       <div className="w-full h-[400px] rounded-lg overflow-hidden">
         {mapEmbedUrl ? (
-          <iframe
-            src={mapEmbedUrl}
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          // <iframe
+          //   src={mapEmbedUrl}
+          //   width="100%"
+          //   height="400"
+          //   style={{ border: 0 }}
+          //   allowFullScreen
+          //   loading="lazy"
+          //   referrerPolicy="no-referrer-when-downgrade"
+          // />
+          <Map markers={[{position: eventLocation, title: "Event Location"}]} center={eventLocation}/>
         ) : (
           <p className="text-gray-500 text-center">Map loading...</p>
         )}
       </div>
-
-      <p className="text-xs text-gray-500">
-        Note: Ensure you replace <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> with a valid Google Maps API key.
-      </p>
     </div>
   );
 }
