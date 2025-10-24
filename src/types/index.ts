@@ -39,7 +39,7 @@ export interface BusinessProfile {
   description: string;
   website?: string;
   socialMedia?: SocialMedia;
-  verificationStatus: 'pending' | 'verified' | 'rejected';
+  verificationStatus: "pending" | "verified" | "rejected";
   verificationDocuments: string[];
   commissionRate: number;
 }
@@ -55,12 +55,12 @@ export interface NotificationPreferences {
 }
 
 export interface User {
-  _id: string;  // MongoDB ObjectId
+  _id: string; // MongoDB ObjectId
   email: string;
   passwordHash: string;
   firstName: string;
   lastName: string;
-  role: 'customer' | 'business';
+  role: "customer" | "business";
   phone?: string;
   profileImage?: string;
   createdAt: Date;
@@ -69,7 +69,7 @@ export interface User {
   isVerified: boolean;
   stripe?: StripeDetails;
   businessProfile?: BusinessProfile;
-  savedExperiences: string[];  // Array of Experience ObjectIds
+  savedExperiences: string[]; // Array of Experience ObjectIds
   notificationPreferences: NotificationPreferences;
   clerkId?: string;
 }
@@ -91,7 +91,7 @@ export interface Location {
 
 export interface Duration {
   length: number;
-  unit: 'minutes' | 'hours' | 'days';
+  unit: "minutes" | "hours" | "days";
 }
 
 export interface TimeSlotConfig {
@@ -109,7 +109,7 @@ export interface Slots {
 }
 
 export interface CancellationPolicy {
-  type: 'flexible' | 'moderate' | 'strict';
+  type: "flexible" | "moderate" | "strict";
   description: string;
 }
 
@@ -144,7 +144,7 @@ export interface Experience {
   additionalInfo?: string;
   cancellationPolicy: CancellationPolicy;
   rating: Rating;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   createdAt: Date;
   updatedAt: Date;
   publishedAt?: Date;
@@ -172,31 +172,31 @@ export interface BookingPricing {
 }
 
 export interface PaymentDetails {
-  paymentMethod: 'card' | 'paypal';
+  paymentMethod: "card" | "paypal";
   transactionId: string;
   receiptUrl: string;
 }
 
 export interface CancellationDetails {
-  cancelledBy: 'customer' | 'business' | 'system';
+  cancelledBy: "customer" | "business" | "system";
   cancellationReason: string;
   cancellationDate: Date;
   refundAmount: number;
 }
 
 export interface Booking {
-  _id: string;  // MongoDB ObjectId
-  experienceId: string;  // Reference to experience
-  customerId: string;  // Reference to customer user
-  businessId: string;  // Reference to business owner
+  _id: string; // MongoDB ObjectId
+  experienceId: string; // Reference to experience
+  customerId: string; // Reference to customer user
+  businessId: string; // Reference to business owner
   bookingReference: string;
   date: Date;
   timeSlot: BookingTimeSlot;
   quantity: number;
   participants: BookingParticipant[];
   pricing: BookingPricing;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
+  status: "pending" | "confirmed" | "cancelled" | "completed";
+  paymentStatus: "pending" | "paid" | "refunded" | "failed";
   paymentDetails: PaymentDetails;
   cancellation?: CancellationDetails;
   cancellationDeadline: Date;
@@ -213,55 +213,53 @@ export interface ReviewResponse {
 }
 
 export interface Review {
-  _id: string;  // MongoDB ObjectId
-  experienceId: string;  // Reference to experience
-  bookingId: string;  // Reference to booking
-  authorId: string;  // Reference to user
+  _id: string; // MongoDB ObjectId
+  experienceId: string; // Reference to experience
+  bookingId: string; // Reference to booking
+  authorId: string; // Reference to user
   title: string;
   content: string;
   images?: string[];
-  rating: number;  // 1-5
-  isVerified: boolean;  // Confirmed purchase
+  rating: number; // 1-5
+  isVerified: boolean; // Confirmed purchase
   helpfulCount: number;
   unhelpfulCount: number;
-  response?: ReviewResponse;  // Business owner response
+  response?: ReviewResponse; // Business owner response
   reportCount: number;
   isHidden: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-
 // availabilitues
 export interface TimeSlot {
-  startTime: string;      // Format: "HH:mm" e.g., "09:00"
-  endTime: string;        // Format: "HH:mm" e.g., "11:00"
-  totalCapacity: number;  // Maximum number of bookings allowed
-  bookedCount: number;    // Current number of bookings
-  isAvailable: boolean;   // Quick check for availability
+  startTime: string; // Format: "HH:mm" e.g., "09:00"
+  endTime: string; // Format: "HH:mm" e.g., "11:00"
+  totalCapacity: number; // Maximum number of bookings allowed
+  bookedCount: number; // Current number of bookings
+  isAvailable: boolean; // Quick check for availability
 }
 
 export interface Availability {
-  _id: string;           // MongoDB ObjectId
-  experienceId: string;  // Reference to experience
-  date: Date;            // The date this availability is for
+  _id: string; // MongoDB ObjectId
+  experienceId: string; // Reference to experience
+  date: Date; // The date this availability is for
   timeSlots: TimeSlot[];
-  isBlocked: boolean;    // Owner manually blocked this date
-  blockReason?: string;  // Optional reason for blocking
-  updatedAt: Date;       // Last modification timestamp
+  isBlocked: boolean; // Owner manually blocked this date
+  blockReason?: string; // Optional reason for blocking
+  updatedAt: Date; // Last modification timestamp
 }
 
 // Categories
 export interface Category {
-  _id: string;            // MongoDB ObjectId
-  name: string;           // e.g., "adventures", "day-outs"
-  slug: string;           // URL-friendly name
+  _id: string; // MongoDB ObjectId
+  name: string; // e.g., "adventures", "day-outs"
+  slug: string; // URL-friendly name
   description: string;
-  image: string;          // URL to category image
-  active: boolean;        // Whether category is visible
+  image: string; // URL to category image
+  active: boolean; // Whether category is visible
   featuredOrder?: number; // Optional ordering for homepage
 }
-
 
 // Transactions
 export interface TransactionMetadata {
@@ -280,18 +278,18 @@ export interface TransactionMetadata {
 }
 
 export interface Transaction {
-  _id: string;           // MongoDB ObjectId
-  bookingId: string;     // Reference to booking
-  customerId: string;    // Reference to customer user
-  businessId: string;    // Reference to business owner
+  _id: string; // MongoDB ObjectId
+  bookingId: string; // Reference to booking
+  customerId: string; // Reference to customer user
+  businessId: string; // Reference to business owner
   amount: number;
   currency: string;
-  type: 'payment' | 'refund' | 'payout';
-  status: 'pending' | 'completed' | 'failed';
-  paymentMethod: 'card' | 'paypal' | 'bank_transfer';
-  paymentGateway: 'stripe' | 'paypal';
-  transactionId: string;  // External payment provider ID
-  fee: number;            // Platform fee
+  type: "payment" | "refund" | "payout";
+  status: "pending" | "completed" | "failed";
+  paymentMethod: "card" | "paypal" | "bank_transfer";
+  paymentGateway: "stripe" | "paypal";
+  transactionId: string; // External payment provider ID
+  fee: number; // Platform fee
   businessPayout: number; // Amount paid to business
   description: string;
   metadata: TransactionMetadata;
@@ -300,29 +298,29 @@ export interface Transaction {
 
 // Notifications
 export interface Notification {
-  _id: string;          // MongoDB ObjectId
-  userId: string;       // Recipient user
+  _id: string; // MongoDB ObjectId
+  userId: string; // Recipient user
   type: NotificationType;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
   title: string;
   message: string;
-  relatedId: string;    // ID of related entity (booking, review, etc.)
+  relatedId: string; // ID of related entity (booking, review, etc.)
   actionUrl?: string;
   read: boolean;
   delivered: boolean;
   createdAt: Date;
 }
 
-export type NotificationType = 
-  | 'booking_confirmation'
-  | 'booking_reminder'
-  | 'booking_cancelled'
-  | 'review_received'
-  | 'review_response'
-  | 'payment_successful'
-  | 'payment_failed'
-  | 'payout_processed'
-  | 'experience_update';
+export type NotificationType =
+  | "booking_confirmation"
+  | "booking_reminder"
+  | "booking_cancelled"
+  | "review_received"
+  | "review_response"
+  | "payment_successful"
+  | "payment_failed"
+  | "payout_processed"
+  | "experience_update";
 
 // API Response Types
 export interface ApiLocation {
@@ -353,19 +351,43 @@ export interface ApiCategory {
   image: string;
 }
 
+export interface ApiTime {
+  hour: string;
+  minute: string;
+  period: string;
+}
+
+export interface ApiRate {
+  duration: number;
+  price: ApiPrice;
+}
+
 export interface ApiExperience {
   _id: string;
   refNo: string;
-  slug: string;
   title: string;
   description: string;
-  duration: number;
+  slug: string;
+  location: ApiLocation;
+  availableDates: {
+    mode: string;
+    specificWeekDays?: string[];
+    dates: Date[];
+  };
+  availableTimes: {
+    mode: string;
+    specificTimes?: string[];
+    timeRanges: { fromTime: ApiTime; toTime: ApiTime }[];
+    times: ApiTime[];
+  };
+  rates: ApiRate[];
   highlights: string[];
   inclusions: string[];
   exclusions: string[];
   additionalInfo: string[];
   images: string[];
   maxParticipants: number;
+  ageRestrictions: ApiAgeRestrictions;
   physicalRequirements: string[];
   languages: string[];
   status: string;
@@ -380,9 +402,6 @@ export interface ApiExperience {
   reviews: any[];
   createdAt: string;
   updatedAt: string;
-  location: ApiLocation;
-  price: ApiPrice;
-  ageRestrictions: ApiAgeRestrictions;
 }
 
 export interface ApiPagination {
@@ -408,7 +427,7 @@ export interface CartItem {
   currency: string;
   quantity: number;
   date: Date;
-  time?: string;
+  time?: ApiTime;
   location: {
     city: string;
     country: string;
@@ -438,7 +457,7 @@ export interface CheckoutFormData {
 
 export interface PaymentMethod {
   id: string;
-  type: 'card' | 'paypal';
+  type: "card" | "paypal";
   last4?: string;
   brand?: string;
   isDefault: boolean;

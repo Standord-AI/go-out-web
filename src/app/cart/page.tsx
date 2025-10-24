@@ -27,7 +27,7 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    router.push('/checkout');
+    router.push("/checkout");
   };
 
   if (state.items.length === 0) {
@@ -35,7 +35,9 @@ export default function CartPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center">
           <ShoppingBag className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Your cart is empty
+          </h1>
           <p className="text-gray-600 mb-6">
             Looks like you haven't added any experiences to your cart yet.
           </p>
@@ -53,11 +55,7 @@ export default function CartPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="p-2"
-          >
+          <Button variant="ghost" onClick={() => router.back()} className="p-2">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-3xl font-bold">Shopping Cart</h1>
@@ -79,15 +77,18 @@ export default function CartPage() {
                         className="object-cover rounded-lg"
                       />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
+                      <h3 className="font-semibold text-lg mb-1">
+                        {item.title}
+                      </h3>
                       <p className="text-gray-600 text-sm mb-2">
                         {item.location.city}, {item.location.country}
                       </p>
                       <p className="text-gray-600 text-sm mb-2">
                         {format(item.date, "PPP")}
-                        {item.time && ` at ${item.time}`}
+                        {item.time &&
+                          ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
                       </p>
                       <p className="text-gray-600 text-sm">
                         Duration: {item.duration}
@@ -108,12 +109,16 @@ export default function CartPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || isUpdating === item.id}
+                          onClick={() =>
+                            handleQuantityChange(item.id, item.quantity - 1)
+                          }
+                          disabled={
+                            item.quantity <= 1 || isUpdating === item.id
+                          }
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        
+
                         <Input
                           type="number"
                           min="1"
@@ -126,12 +131,17 @@ export default function CartPage() {
                           className="w-16 text-center"
                           disabled={isUpdating === item.id}
                         />
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          disabled={item.quantity >= item.maxParticipants || isUpdating === item.id}
+                          onClick={() =>
+                            handleQuantityChange(item.id, item.quantity + 1)
+                          }
+                          disabled={
+                            item.quantity >= item.maxParticipants ||
+                            isUpdating === item.id
+                          }
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
