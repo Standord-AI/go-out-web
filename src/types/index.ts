@@ -212,23 +212,50 @@ export interface ReviewResponse {
   createdAt: Date;
 }
 
+// export interface Review {
+//   _id: string; // MongoDB ObjectId
+//   experienceId: string; // Reference to experience
+//   bookingId: string; // Reference to booking
+//   authorId: string; // Reference to user
+//   title: string;
+//   content: string;
+//   images?: string[];
+//   rating: number; // 1-5
+//   isVerified: boolean; // Confirmed purchase
+//   helpfulCount: number;
+//   unhelpfulCount: number;
+//   response?: ReviewResponse; // Business owner response
+//   reportCount: number;
+//   isHidden: boolean;
+//   createdAt: Date;
+//   updatedAt: Date;
+// }
+
 export interface Review {
-  _id: string; // MongoDB ObjectId
-  experienceId: string; // Reference to experience
-  bookingId: string; // Reference to booking
-  authorId: string; // Reference to user
-  title: string;
-  content: string;
-  images?: string[];
-  rating: number; // 1-5
-  isVerified: boolean; // Confirmed purchase
+  _id: string;
+  userId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  updatedAt: string;
+  rating: number;
+  title?: string;
+  description: string;
   helpfulCount: number;
   unhelpfulCount: number;
-  response?: ReviewResponse; // Business owner response
-  reportCount: number;
-  isHidden: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  helpfulUsers: string[];
+  unhelpfulUsers: string[];
+}
+
+export interface ReviewStat {
+  averageRating: number;
+  totalReviews: number;
+  // recommendations?: number;
+  // recommendPercent?: number;
+  distribution: { rating: number; percentage: number }[];
+  // pros: { name: string; rating?: number }[];
+  // cons: { name: string }[];
 }
 
 // availabilitues
