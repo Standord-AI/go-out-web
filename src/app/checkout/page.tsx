@@ -7,7 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CreditCard,
+  Lock,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -38,18 +44,18 @@ export default function CheckoutPage() {
   ];
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleNext = () => {
-    const currentIndex = steps.findIndex(step => step.id === currentStep);
+    const currentIndex = steps.findIndex((step) => step.id === currentStep);
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1].id as CheckoutStep);
     }
   };
 
   const handleBack = () => {
-    const currentIndex = steps.findIndex(step => step.id === currentStep);
+    const currentIndex = steps.findIndex((step) => step.id === currentStep);
     if (currentIndex > 0) {
       setCurrentStep(steps[currentIndex - 1].id as CheckoutStep);
     }
@@ -60,34 +66,27 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
-      // Create an array of promises, one for each booking API call
-      const bookingPromises = state.items.map(item => {
-        const bookingPayload = {
-          experienceId: item.experienceId,
-          selectedDate: item.date,
-          selectedTime: item.time,
-          duration: parseInt(item.duration, 10), // Ensure duration is a number
-          quantity: item.quantity,
-          name: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          phoneNumber: formData.phone,
-          specialRequests: formData.specialRequests,
-        };
-        // The backend calculates totalPayable, so we don't send it.
-        return axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings`, bookingPayload);
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: state.items,
+          customer: formData,
+        }),
       });
 
-      // Wait for all booking requests to complete
-      await Promise.all(bookingPromises);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Something went wrong");
+      }
 
-      // If all bookings are successful, proceed to confirmation
       setIsProcessing(false);
       setCurrentStep("confirmation");
       clearCart();
-
     } catch (err: any) {
-      console.error("Booking submission failed:", err);
-      setError(err.response?.data?.message || "One or more bookings could not be completed. Please check the details and try again.");
+      setError(err.message || "One or more bookings failed.");
       setIsProcessing(false);
     }
   };
@@ -100,12 +99,12 @@ export default function CheckoutPage() {
             className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
               currentStep === step.id
                 ? "bg-orange-500 border-orange-500 text-white"
-                : index < steps.findIndex(s => s.id === currentStep)
+                : index < steps.findIndex((s) => s.id === currentStep)
                 ? "bg-green-500 border-green-500 text-white"
                 : "border-gray-300 text-gray-500"
             }`}
           >
-            {index < steps.findIndex(s => s.id === currentStep) ? (
+            {index < steps.findIndex((s) => s.id === currentStep) ? (
               <CheckCircle className="w-4 h-4" />
             ) : (
               <span className="text-sm font-medium">{index + 1}</span>
@@ -114,7 +113,7 @@ export default function CheckoutPage() {
           {index < steps.length - 1 && (
             <div
               className={`w-16 h-0.5 mx-2 ${
-                index < steps.findIndex(s => s.id === currentStep)
+                index < steps.findIndex((s) => s.id === currentStep)
                   ? "bg-green-500"
                   : "bg-gray-300"
               }`}
@@ -176,7 +175,9 @@ export default function CheckoutPage() {
           <Textarea
             id="specialRequests"
             value={formData.specialRequests}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("specialRequests", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleInputChange("specialRequests", e.target.value)
+            }
             placeholder="Any special requirements or requests..."
             rows={3}
           />
@@ -197,36 +198,24 @@ export default function CheckoutPage() {
             Secure payment powered by Stripe
           </span>
         </div>
-        
+
         <div className="space-y-4">
           <div>
             <Label htmlFor="cardNumber">Card Number</Label>
-            <Input
-              id="cardNumber"
-              placeholder="1234 5678 9012 3456"
-              disabled
-            />
+            <Input id="cardNumber" placeholder="1234 5678 9012 3456" disabled />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="expiry">Expiry Date</Label>
-              <Input
-                id="expiry"
-                placeholder="MM/YY"
-                disabled
-              />
+              <Input id="expiry" placeholder="MM/YY" disabled />
             </div>
             <div>
               <Label htmlFor="cvv">CVV</Label>
-              <Input
-                id="cvv"
-                placeholder="123"
-                disabled
-              />
+              <Input id="cvv" placeholder="123" disabled />
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Lock className="w-4 h-4" />
           <span>Your payment information is encrypted and secure</span>
@@ -257,7 +246,8 @@ export default function CheckoutPage() {
                   <h4 className="font-semibold">{item.title}</h4>
                   <p className="text-sm text-gray-600">
                     {format(new Date(item.date), "PPP")}
-                    {item.time && ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
+                    {item.time &&
+                      ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
                   </p>
                   <p className="text-sm text-gray-600">
                     Quantity: {item.quantity}
@@ -280,11 +270,19 @@ export default function CheckoutPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <p><strong>Name:</strong> {formData.firstName} {formData.lastName}</p>
-            <p><strong>Email:</strong> {formData.email}</p>
-            <p><strong>Phone:</strong> {formData.phone}</p>
+            <p>
+              <strong>Name:</strong> {formData.firstName} {formData.lastName}
+            </p>
+            <p>
+              <strong>Email:</strong> {formData.email}
+            </p>
+            <p>
+              <strong>Phone:</strong> {formData.phone}
+            </p>
             {formData.specialRequests && (
-              <p><strong>Special Requests:</strong> {formData.specialRequests}</p>
+              <p>
+                <strong>Special Requests:</strong> {formData.specialRequests}
+              </p>
             )}
           </div>
         </CardContent>
@@ -327,7 +325,8 @@ export default function CheckoutPage() {
       </div>
       <h2 className="text-2xl font-bold">Booking Confirmed!</h2>
       <p className="text-gray-600 max-w-md mx-auto">
-        Thank you for your booking. You will receive a confirmation email shortly with all the details.
+        Thank you for your booking. You will receive a confirmation email
+        shortly with all the details.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Button
@@ -336,7 +335,11 @@ export default function CheckoutPage() {
         >
           Browse More Experiences
         </Button>
-        <Button variant="outline" onClick={() => router.push("/")} className="w-full sm:w-auto">
+        <Button
+          variant="outline"
+          onClick={() => router.push("/")}
+          className="w-full sm:w-auto"
+        >
           Return to Home
         </Button>
       </div>
@@ -351,7 +354,7 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        {currentStep !== 'confirmation' && (
+        {currentStep !== "confirmation" && (
           <div className="flex items-center gap-4 mb-8">
             <Button
               variant="ghost"
@@ -364,7 +367,7 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {currentStep !== 'confirmation' && renderStepIndicator()}
+        {currentStep !== "confirmation" && renderStepIndicator()}
 
         <div className="space-y-6">
           {currentStep === "details" && renderContactDetails()}
@@ -389,16 +392,24 @@ export default function CheckoutPage() {
             >
               Back
             </Button>
-            
+
             <Button
               onClick={currentStep === "review" ? handleSubmit : handleNext}
               disabled={
-                (currentStep === "details" && (!formData.firstName || !formData.lastName || !formData.email || !formData.phone)) ||
+                (currentStep === "details" &&
+                  (!formData.firstName ||
+                    !formData.lastName ||
+                    !formData.email ||
+                    !formData.phone)) ||
                 isProcessing
               }
               className="bg-orange-500 hover:bg-orange-600"
             >
-              {isProcessing ? "Processing..." : currentStep === "review" ? "Confirm Booking" : "Continue"}
+              {isProcessing
+                ? "Processing..."
+                : currentStep === "review"
+                ? "Confirm Booking"
+                : "Continue"}
             </Button>
           </div>
         )}
