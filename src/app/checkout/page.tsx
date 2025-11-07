@@ -7,12 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, CreditCard, Lock, Shield, CheckCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CreditCard,
+  Lock,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CheckoutFormData } from "@/types";
+import axios from "axios"; // Import axios
 
 type CheckoutStep = "details" | "payment" | "review" | "confirmation";
 
@@ -28,6 +34,7 @@ export default function CheckoutPage() {
     specialRequests: "",
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Add error state
 
   const steps = [
     { id: "details", title: "Contact Details" },
@@ -37,18 +44,18 @@ export default function CheckoutPage() {
   ];
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleNext = () => {
-    const currentIndex = steps.findIndex(step => step.id === currentStep);
+    const currentIndex = steps.findIndex((step) => step.id === currentStep);
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1].id as CheckoutStep);
     }
   };
 
   const handleBack = () => {
-    const currentIndex = steps.findIndex(step => step.id === currentStep);
+    const currentIndex = steps.findIndex((step) => step.id === currentStep);
     if (currentIndex > 0) {
       setCurrentStep(steps[currentIndex - 1].id as CheckoutStep);
     }
@@ -56,11 +63,32 @@ export default function CheckoutPage() {
 
   const handleSubmit = async () => {
     setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    setCurrentStep("confirmation");
-    clearCart();
+    setError(null);
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: state.items,
+          customer: formData,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Something went wrong");
+      }
+
+      setIsProcessing(false);
+      setCurrentStep("confirmation");
+      clearCart();
+    } catch (err: any) {
+      setError(err.message || "One or more bookings failed.");
+      setIsProcessing(false);
+    }
   };
 
   const renderStepIndicator = () => (
@@ -71,12 +99,12 @@ export default function CheckoutPage() {
             className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
               currentStep === step.id
                 ? "bg-orange-500 border-orange-500 text-white"
-                : index < steps.findIndex(s => s.id === currentStep)
+                : index < steps.findIndex((s) => s.id === currentStep)
                 ? "bg-green-500 border-green-500 text-white"
                 : "border-gray-300 text-gray-500"
             }`}
           >
-            {index < steps.findIndex(s => s.id === currentStep) ? (
+            {index < steps.findIndex((s) => s.id === currentStep) ? (
               <CheckCircle className="w-4 h-4" />
             ) : (
               <span className="text-sm font-medium">{index + 1}</span>
@@ -85,7 +113,7 @@ export default function CheckoutPage() {
           {index < steps.length - 1 && (
             <div
               className={`w-16 h-0.5 mx-2 ${
-                index < steps.findIndex(s => s.id === currentStep)
+                index < steps.findIndex((s) => s.id === currentStep)
                   ? "bg-green-500"
                   : "bg-gray-300"
               }`}
@@ -147,7 +175,9 @@ export default function CheckoutPage() {
           <Textarea
             id="specialRequests"
             value={formData.specialRequests}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("specialRequests", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleInputChange("specialRequests", e.target.value)
+            }
             placeholder="Any special requirements or requests..."
             rows={3}
           />
@@ -168,36 +198,24 @@ export default function CheckoutPage() {
             Secure payment powered by Stripe
           </span>
         </div>
-        
+
         <div className="space-y-4">
           <div>
             <Label htmlFor="cardNumber">Card Number</Label>
-            <Input
-              id="cardNumber"
-              placeholder="1234 5678 9012 3456"
-              disabled
-            />
+            <Input id="cardNumber" placeholder="1234 5678 9012 3456" disabled />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="expiry">Expiry Date</Label>
-              <Input
-                id="expiry"
-                placeholder="MM/YY"
-                disabled
-              />
+              <Input id="expiry" placeholder="MM/YY" disabled />
             </div>
             <div>
               <Label htmlFor="cvv">CVV</Label>
-              <Input
-                id="cvv"
-                placeholder="123"
-                disabled
-              />
+              <Input id="cvv" placeholder="123" disabled />
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Lock className="w-4 h-4" />
           <span>Your payment information is encrypted and secure</span>
@@ -227,8 +245,9 @@ export default function CheckoutPage() {
                 <div className="flex-1">
                   <h4 className="font-semibold">{item.title}</h4>
                   <p className="text-sm text-gray-600">
-                    {format(item.date, "PPP")}
-                    {item.time && ` at ${item.time}`}
+                    {format(new Date(item.date), "PPP")}
+                    {item.time &&
+                      ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
                   </p>
                   <p className="text-sm text-gray-600">
                     Quantity: {item.quantity}
@@ -251,11 +270,19 @@ export default function CheckoutPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <p><strong>Name:</strong> {formData.firstName} {formData.lastName}</p>
-            <p><strong>Email:</strong> {formData.email}</p>
-            <p><strong>Phone:</strong> {formData.phone}</p>
+            <p>
+              <strong>Name:</strong> {formData.firstName} {formData.lastName}
+            </p>
+            <p>
+              <strong>Email:</strong> {formData.email}
+            </p>
+            <p>
+              <strong>Phone:</strong> {formData.phone}
+            </p>
             {formData.specialRequests && (
-              <p><strong>Special Requests:</strong> {formData.specialRequests}</p>
+              <p>
+                <strong>Special Requests:</strong> {formData.specialRequests}
+              </p>
             )}
           </div>
         </CardContent>
@@ -279,7 +306,7 @@ export default function CheckoutPage() {
               <span>Service Fee</span>
               <span>${state.fees.toFixed(2)}</span>
             </div>
-            <div className="border-t pt-2">
+            <div className="border-t pt-2 mt-2">
               <div className="flex justify-between font-semibold text-lg">
                 <span>Total</span>
                 <span>${state.total.toFixed(2)}</span>
@@ -298,16 +325,21 @@ export default function CheckoutPage() {
       </div>
       <h2 className="text-2xl font-bold">Booking Confirmed!</h2>
       <p className="text-gray-600 max-w-md mx-auto">
-        Thank you for your booking. You will receive a confirmation email shortly with all the details.
+        Thank you for your booking. You will receive a confirmation email
+        shortly with all the details.
       </p>
-      <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Button
           onClick={() => router.push("/experiences")}
-          className="bg-orange-500 hover:bg-orange-600"
+          className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
         >
           Browse More Experiences
         </Button>
-        <Button variant="outline" onClick={() => router.push("/")}>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/")}
+          className="w-full sm:w-auto"
+        >
           Return to Home
         </Button>
       </div>
@@ -322,18 +354,20 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Checkout</h1>
-        </div>
+        {currentStep !== "confirmation" && (
+          <div className="flex items-center gap-4 mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="p-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Checkout</h1>
+          </div>
+        )}
 
-        {renderStepIndicator()}
+        {currentStep !== "confirmation" && renderStepIndicator()}
 
         <div className="space-y-6">
           {currentStep === "details" && renderContactDetails()}
@@ -342,25 +376,40 @@ export default function CheckoutPage() {
           {currentStep === "confirmation" && renderConfirmation()}
         </div>
 
+        {currentStep === "review" && error && (
+          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {currentStep !== "confirmation" && (
           <div className="flex justify-between mt-8">
             <Button
               variant="outline"
               onClick={handleBack}
-              disabled={currentStep === "details"}
+              disabled={currentStep === "details" || isProcessing}
             >
               Back
             </Button>
-            
+
             <Button
               onClick={currentStep === "review" ? handleSubmit : handleNext}
               disabled={
-                (currentStep === "details" && (!formData.firstName || !formData.lastName || !formData.email || !formData.phone)) ||
+                (currentStep === "details" &&
+                  (!formData.firstName ||
+                    !formData.lastName ||
+                    !formData.email ||
+                    !formData.phone)) ||
                 isProcessing
               }
               className="bg-orange-500 hover:bg-orange-600"
             >
-              {isProcessing ? "Processing..." : currentStep === "review" ? "Confirm Booking" : "Continue"}
+              {isProcessing
+                ? "Processing..."
+                : currentStep === "review"
+                ? "Confirm Booking"
+                : "Continue"}
             </Button>
           </div>
         )}
