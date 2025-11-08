@@ -28,6 +28,7 @@ import { Review, ReviewStat } from "@/types";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ReviewsTabProps {
   reviews: Review[];
@@ -40,6 +41,7 @@ interface ReviewsTabProps {
   onLoadMore: () => void;
   hasNextPage: boolean;
   isLoadingMore: boolean;
+  reviewsLoading: boolean;
 }
 
 export function ReviewsTab({
@@ -53,10 +55,10 @@ export function ReviewsTab({
   onLoadMore,
   hasNextPage,
   isLoadingMore,
+  reviewsLoading,
 }: ReviewsTabProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [showAllReviews, setShowAllReviews] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [rating, setRating] = useState(0);
@@ -148,19 +150,20 @@ export function ReviewsTab({
 
         {/* Review List */}
         <div className="space-y-6">
-          <div className="flex justify-between items-center border-b-2 border-gray-200">
-            <div className="flex items-center justify-center gap-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center border-b-2 border-gray-200 pb-4 gap-4">
+            <div className="flex items-center w-full sm:w-fit justify-between sm:justify-center sm:gap-6">
               <h3 className="text-lg font-medium">Customer Reviews</h3>
-              <Button variant="default" onClick={handleDialogOpen}>
+              <Button variant="default" onClick={handleDialogOpen} className="w-fit">
                 Add a Review
               </Button>
             </div>
             <Select onValueChange={onSortChange} value={sortOption}>
-              <SelectTrigger className="min-w-52">
+              <SelectTrigger className="w-full sm:w-52">
                 <SelectValue placeholder="Sort by: Most Helpful" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
                 <SelectItem value="most-helpful">Most Helpful</SelectItem>
                 <SelectItem value="highest">Highest Rating</SelectItem>
                 <SelectItem value="lowest">Lowest Rating</SelectItem>
@@ -169,86 +172,92 @@ export function ReviewsTab({
           </div>
 
           {/* Individual Reviews */}
-          <div className="space-y-6">
-            {reviews.map((review) =>
-              (() => {
-                const isHelpful =
-                  user && review.helpfulUsers?.includes(user._id);
-                const isUnhelpful =
-                  user && review.unhelpfulUsers?.includes(user._id);
-                return (
-                  <div
-                    key={review._id}
-                    className="border-b border-gray-200 pb-6 flex flex-col gap-6"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex gap-3 items-center text-zinc-600">
-                        <UserCircle />
-                        <span className="font-medium text-lg">
-                          {review.userId.firstName}&nbsp;
-                          {review.userId.lastName}
-                        </span>
+          {reviewsLoading ? (
+            <div className="flex h-[500px] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {reviews.map((review) =>
+                (() => {
+                  const isHelpful =
+                    user && review.helpfulUsers?.includes(user._id);
+                  const isUnhelpful =
+                    user && review.unhelpfulUsers?.includes(user._id);
+                  return (
+                    <div
+                      key={review._id}
+                      className="border-b border-gray-200 pb-6 flex flex-col gap-6"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex gap-3 items-center text-zinc-600">
+                          <UserCircle />
+                          <span className="font-medium text-lg">
+                            {review.userId.firstName}&nbsp;
+                            {review.userId.lastName}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= review.rating
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`h-4 w-4 ${
-                              star <= review.rating
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <h4 className="text-lg font-semibold">
-                      {review.description ||
-                        `Rated by ${review.userId.firstName} ${review.userId.lastName}`}
-                    </h4>
-                    <span className="text-sm text-muted-foreground font-medium">
-                      {new Date(review.updatedAt).toLocaleDateString()}
-                    </span>
+                      <h4 className="text-lg font-semibold">
+                        {review.description ||
+                          `Rated by ${review.userId.firstName} ${review.userId.lastName}`}
+                      </h4>
+                      <span className="text-sm text-muted-foreground font-medium">
+                        {new Date(review.updatedAt).toLocaleDateString()}
+                      </span>
 
-                    <div className="flex items-center gap-4 text-sm">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`flex items-center gap-1 ${
-                          isHelpful ? "text-primary" : ""
-                        }`}
-                        onClick={() =>
-                          !user
-                            ? router.push("/auth/login")
-                            : onHelpful?.(review._id)
-                        }
-                        disabled={isHelpful != null ? isHelpful : false}
-                      >
-                        <ThumbsUp className="size-4" />
-                        Helpful ({review.helpfulCount})
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`flex items-center gap-1 ${
-                          isUnhelpful ? "text-destructive" : ""
-                        }`}
-                        onClick={() =>
-                          !user
-                            ? router.push("/auth/login")
-                            : onUnhelpful?.(review._id)
-                        }
-                        disabled={isUnhelpful != null ? isUnhelpful : false}
-                      >
-                        <ThumbsDown className="size-4" />
-                        Not Helpful ({review.unhelpfulCount})
-                      </Button>
+                      <div className="flex items-center gap-4 text-sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`flex items-center gap-1 ${
+                            isHelpful ? "text-primary" : ""
+                          }`}
+                          onClick={() =>
+                            !user
+                              ? router.push("/auth/login")
+                              : onHelpful?.(review._id)
+                          }
+                          disabled={isHelpful != null ? isHelpful : false}
+                        >
+                          <ThumbsUp className="size-4" />
+                          Helpful ({review.helpfulCount})
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`flex items-center gap-1 ${
+                            isUnhelpful ? "text-destructive" : ""
+                          }`}
+                          onClick={() =>
+                            !user
+                              ? router.push("/auth/login")
+                              : onUnhelpful?.(review._id)
+                          }
+                          disabled={isUnhelpful != null ? isUnhelpful : false}
+                        >
+                          <ThumbsDown className="size-4" />
+                          Not Helpful ({review.unhelpfulCount})
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })()
-            )}
-          </div>
+                  );
+                })()
+              )}
+            </div>
+          )}
 
           {hasNextPage && (
             <div className="flex justify-center mt-6">
@@ -258,7 +267,14 @@ export function ReviewsTab({
                 className="flex items-center gap-1"
                 disabled={isLoadingMore}
               >
-                {isLoadingMore ? "Loading..." : "Load more reviews"}
+                {isLoadingMore ? (
+                  <span className="flex gap-2 items-center">
+                    <p>Loading</p>
+                    <Spinner size="sm" />
+                  </span>
+                ) : (
+                  "Load more reviews"
+                )}
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </div>

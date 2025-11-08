@@ -238,7 +238,7 @@ export interface Review {
     firstName: string;
     lastName: string;
   };
-  updatedAt: string;
+  updatedAt: Date;
   rating: number;
   title?: string;
   description: string;

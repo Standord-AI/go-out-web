@@ -10,6 +10,7 @@ import { ImportantInfoTab } from "./tabs/ImportantInfoTab";
 import { LocationTab } from "./tabs/LocationTab";
 import { ReviewsTab } from "./tabs/ReviewsTab";
 import { ApiExperience, ApiTime, Review, ReviewStat } from "@/types";
+import axios from "axios";
 
 const REVIEWS_PER_PAGE = 5;
 
@@ -36,17 +37,19 @@ export default function ExperienceDetails({
   const [sortOption, setSortOption] = useState("newest");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(!initialData);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [availableTimes, setAvailableTimes] = useState<ApiTime[]>([]);
   const [isDateFullyBooked, setIsDateFullyBooked] = useState(false);
 
   const fetchReviews = async (pageNum: number, shouldAppend = false) => {
     try {
-      setReviewsLoading(true);
+      shouldAppend === false ? setReviewsLoading(true) : setLoadingMore(true);
       const reviewsResponse = await fetch(
         `/api/reviews/experiences/${experienceId}?sortBy=${sortOption}&page=${pageNum}&limit=${REVIEWS_PER_PAGE}`
       );
+      console.log(loadingMore);
       if (!reviewsResponse.ok) {
         throw new Error(`HTTP error! status: ${reviewsResponse.status}`);
       }
@@ -58,61 +61,64 @@ export default function ExperienceDetails({
       );
       setStats(reviewsData.stats);
       setHasNextPage(reviewsData.reviews.length === REVIEWS_PER_PAGE);
+      setPage(pageNum);
     } catch (error) {
       console.error("Error fetching reviews:", error);
     } finally {
       setReviewsLoading(false);
+      setLoadingMore(false);
     }
   };
-    
-    const fetchData = async () => {
-      if (initialData) {
-        setAvailableTimes(initialData.availableTimes.times);
-        return;
-      }
-      try {
-        setLoading(true);
-        const response = await fetch(`/experiences/${experienceId}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: ApiExperience = await response.json();
-        setExperience(data);
-        setAvailableTimes(data.availableTimes.times); // Initially set all times
-      } catch (error) {
-        console.error("Error fetching experience:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to fetch experience"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    const fetchReviews = async () => {
-        try {
-          setLoading(true);
-          // experienceData passed from previous page
-          await fetchReviews(1);
-        } catch (error) {
-          console.error("Error fetching initial experience data:", error);
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch experience"
-          );
-        } finally {
-          setLoading(false);
-        }
-      };
+  const fetchData = async () => {
+    if (initialData) {
+      setExperience(initialData);
+      setAvailableTimes(initialData.availableTimes.times);
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await fetch(`/experiences/${experienceId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: ApiExperience = await response.json();
+      setExperience(data);
+      setAvailableTimes(data.availableTimes.times); // Initially set all times
+    } catch (error) {
+      console.error("Error fetching experience:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch experience"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (experienceId) {
       setPage(1); // Reset to first page
       setReviews([]); // Clear existing reviews
       fetchData();
-      fetchReviews(1);
     }
+  }, [experienceId, initialData]);
+
+  useEffect(() => {
+    const fetchReviewData = async () => {
+      try {
+        setReviewsLoading(true);
+        // experienceData passed from previous page
+        await fetchReviews(1);
+      } catch (error) {
+        console.error("Error fetching initial experience data:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to fetch experience"
+        );
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviewData();
   }, [experienceId, initialData, sortOption]);
 
   const fetchAvailabilityForDate = async (date: Date) => {
@@ -134,13 +140,13 @@ export default function ExperienceDetails({
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
-    setPage(nextPage);
     fetchReviews(nextPage, true);
   };
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[70vh]">
-        <p className="text-xl">Loading experience details...</p>
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -168,6 +174,7 @@ export default function ExperienceDetails({
     description: string;
   }) => {
     try {
+      setReviewsLoading(true);
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
@@ -186,6 +193,8 @@ export default function ExperienceDetails({
       await fetchReviews(1);
     } catch (err) {
       console.error("Error adding review:", err);
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -306,7 +315,6 @@ export default function ExperienceDetails({
           location={{
             city: experience.location.city,
             country: experience.location.country,
-            country: experience.location.country,
           }}
           maxParticipants={experience.maxParticipants}
           onBooking={handleBooking} // Pass the real booking handler
@@ -325,16 +333,13 @@ export default function ExperienceDetails({
         duration={formatDuration(
           Math.min(...experience.rates.map((rate) => rate.duration))
         )}
-        duration={formatDuration(
-          Math.min(...experience.rates.map((rate) => rate.duration))
-        )}
       />
 
       {/* Tabs for different sections */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
         <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="important">Important Info</TabsTrigger>
+          <TabsTrigger value="important">Info</TabsTrigger>
           <TabsTrigger value="location">Location</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
         </TabsList>
@@ -344,9 +349,6 @@ export default function ExperienceDetails({
             description={experience.description}
             highlights={experience.highlights}
             included={experience.inclusions}
-            sessionLength={formatDuration(
-              Math.min(...experience.rates.map((rate) => rate.duration))
-            )}
             sessionLength={formatDuration(
               Math.min(...experience.rates.map((rate) => rate.duration))
             )}
@@ -382,7 +384,8 @@ export default function ExperienceDetails({
             onUnhelpful={handleUnhelpful}
             onLoadMore={handleLoadMore}
             hasNextPage={hasNextPage}
-            isLoadingMore={reviewsLoading && page > 1}
+            isLoadingMore={loadingMore}
+            reviewsLoading={reviewsLoading}
           />
         </TabsContent>
       </Tabs>

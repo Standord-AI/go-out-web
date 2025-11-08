@@ -8,13 +8,33 @@ export async function GET(
 ) {
   const params = await context.params;
   const { searchParams } = new URL(request.url);
-  const sortBy = searchParams.get("sortBy") || "newest"; // Default to newest
-  const page = searchParams.get("page") || "1";
-  const limit = searchParams.get("limit") || "5";
+  // Validate sortBy
+  const sortByParam = searchParams.get("sortBy") || "newest";
+  const allowedSortOptions = [
+    "newest",
+    "oldest",
+    "highest",
+    "lowest",
+    "most-helpful",
+  ];
+  const sortBy = allowedSortOptions.includes(sortByParam)
+    ? sortByParam
+    : "newest";
+
+  // Validate page and limit as positive integers
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const page =
+    isNaN(pageParam) || pageParam < 1 ? 1 : Math.min(pageParam, 1000);
+
+  const limitParam = parseInt(searchParams.get("limit") || "5", 10);
+  const limit =
+    isNaN(limitParam) || limitParam < 1 ? 5 : Math.min(limitParam, 100);
 
   try {
     const response = await fetch(
-      `${config.backendApiUrl}/reviews/experience/${params.experienceId}?sortBy=${sortBy}&page=${page}&limit=${limit}`,
+      `${config.backendApiUrl}/reviews/experience/${
+        params.experienceId
+      }?sortBy=${encodeURIComponent(sortBy)}&page=${page}&limit=${limit}`,
       {
         method: "GET",
         cache: "no-store",
