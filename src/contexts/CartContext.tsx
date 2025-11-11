@@ -1,12 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CartItem, Cart } from '@/types';
+import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { CartItem, Cart } from "@/types";
 
 interface CartState {
   items: CartItem[];
   totalItems: number;
   subtotal: number;
+  giftTotal?: number;
   taxes: number;
   fees: number;
   total: number;
@@ -14,11 +15,11 @@ interface CartState {
 }
 
 type CartAction =
-  | { type: 'ADD_ITEM'; payload: CartItem }
-  | { type: 'REMOVE_ITEM'; payload: string }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
-  | { type: 'CLEAR_CART' }
-  | { type: 'LOAD_CART'; payload: CartState };
+  | { type: "ADD_ITEM"; payload: CartItem }
+  | { type: "REMOVE_ITEM"; payload: string }
+  | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
+  | { type: "CLEAR_CART" }
+  | { type: "LOAD_CART"; payload: CartState };
 
 interface CartContextType {
   state: CartState;
@@ -32,40 +33,51 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const calculateCartTotals = (items: CartItem[]): Omit<CartState, 'items'> => {
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const taxes = subtotal * 0.08; // 8% tax rate
-  const fees = subtotal * 0.05; // 5% service fee
-  const total = subtotal + taxes + fees;
+const calculateCartTotals = (items: CartItem[]): Omit<CartState, "items"> => {
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const giftTotal = items.reduce(
+    (sum, item) => sum + (item.redeemedBookingId ? item.oldPrice ?? 0 : 0),
+    0
+  );
+  const taxes = (subtotal - giftTotal) * 0.08; // 8% tax rate
+  const fees = (subtotal - giftTotal) * 0.05; // 5% service fee
+  const total = subtotal - giftTotal + taxes + fees;
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return {
     totalItems,
     subtotal,
+    giftTotal,
     taxes,
     fees,
     total,
-    currency: 'USD'
+    currency: "USD",
   };
 };
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
-    case 'ADD_ITEM': {
-      const existingItemIndex = state.items.findIndex(item => item.id === action.payload.id);
-      
+    case "ADD_ITEM": {
+      const existingItemIndex = state.items.findIndex(
+        (item) => item.id === action.payload.id
+      );
+
       if (existingItemIndex >= 0) {
         // Update existing item quantity
         const updatedItems = [...state.items];
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + action.payload.quantity
+          quantity:
+            updatedItems[existingItemIndex].quantity + action.payload.quantity,
         };
-        
+
         return {
           ...state,
           items: updatedItems,
-          ...calculateCartTotals(updatedItems)
+          ...calculateCartTotals(updatedItems),
         };
       } else {
         // Add new item
@@ -73,22 +85,24 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         return {
           ...state,
           items: updatedItems,
-          ...calculateCartTotals(updatedItems)
+          ...calculateCartTotals(updatedItems),
         };
       }
     }
-    
-    case 'REMOVE_ITEM': {
-      const updatedItems = state.items.filter(item => item.id !== action.payload);
+
+    case "REMOVE_ITEM": {
+      const updatedItems = state.items.filter(
+        (item) => item.id !== action.payload
+      );
       return {
         ...state,
         items: updatedItems,
-        ...calculateCartTotals(updatedItems)
+        ...calculateCartTotals(updatedItems),
       };
     }
-    
-    case 'UPDATE_QUANTITY': {
-      const updatedItems = state.items.map(item =>
+
+    case "UPDATE_QUANTITY": {
+      const updatedItems = state.items.map((item) =>
         item.id === action.payload.id
           ? { ...item, quantity: Math.max(1, action.payload.quantity) }
           : item
@@ -96,11 +110,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return {
         ...state,
         items: updatedItems,
-        ...calculateCartTotals(updatedItems)
+        ...calculateCartTotals(updatedItems),
       };
     }
-    
-    case 'CLEAR_CART': {
+
+    case "CLEAR_CART": {
       return {
         items: [],
         totalItems: 0,
@@ -108,14 +122,14 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         taxes: 0,
         fees: 0,
         total: 0,
-        currency: 'USD'
+        currency: "USD",
       };
     }
-    
-    case 'LOAD_CART': {
+
+    case "LOAD_CART": {
       return action.payload;
     }
-    
+
     default:
       return state;
   }
@@ -128,57 +142,62 @@ const initialState: CartState = {
   taxes: 0,
   fees: 0,
   total: 0,
-  currency: 'USD'
+  currency: "USD",
 };
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
+    const savedCart = localStorage.getItem("cart");
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
         // Convert date strings back to Date objects
         const itemsWithDates = parsedCart.items.map((item: any) => ({
           ...item,
-          date: new Date(item.date)
+          date: new Date(item.date),
         }));
-        dispatch({ type: 'LOAD_CART', payload: { ...parsedCart, items: itemsWithDates } });
+        dispatch({
+          type: "LOAD_CART",
+          payload: { ...parsedCart, items: itemsWithDates },
+        });
       } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+        console.error("Error loading cart from localStorage:", error);
       }
     }
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(state));
+    localStorage.setItem("cart", JSON.stringify(state));
   }, [state]);
 
   const addItem = (item: CartItem) => {
-    dispatch({ type: 'ADD_ITEM', payload: item });
+    dispatch({ type: "ADD_ITEM", payload: item });
   };
 
   const removeItem = (id: string) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: id });
+    dispatch({ type: "REMOVE_ITEM", payload: id });
   };
 
   const updateQuantity = (id: string, quantity: number) => {
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
+    dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
   };
 
   const clearCart = () => {
-    dispatch({ type: 'CLEAR_CART' });
+    dispatch({ type: "CLEAR_CART" });
   };
 
   const getCartItem = (id: string) => {
-    return state.items.find(item => item.id === id);
+    return state.items.find((item) => item.id === id);
   };
 
   const isInCart = (experienceId: string) => {
-    return state.items.some(item => item.experienceId === experienceId);
+    return state.items.some((item) => item.experienceId === experienceId);
   };
 
   const value: CartContextType = {
@@ -188,20 +207,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateQuantity,
     clearCart,
     getCartItem,
-    isInCart
+    isInCart,
   };
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };

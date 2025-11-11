@@ -24,61 +24,65 @@ export default function ExperiencesPage() {
     total: 0,
   });
 
-  const fetchExperiences = useCallback(async (filters = {}) => {
-    try {
-      setLoading(true);
-      console.log("Fetching experiences with filters:", filters);
-      
-      const requestBody = {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        sortField: "createdAt",
-        sortOrder: -1,
-        filters: {
-          searchText: searchQuery || "",
-          archived: false,
-          status: true,
-          activities: selectedFilters.activities || [],
-          recipients: selectedFilters.recipients || [],
-          occassions: selectedFilters.occassions || [],
-          ...filters,
-        },
-      };
+  const fetchExperiences = useCallback(
+    async (filters = {}) => {
+      try {
+        setLoading(true);
+        const requestBody = {
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+          sortField: "createdAt",
+          sortOrder: -1,
+          filters: {
+            searchText: searchQuery || "",
+            archived: false,
+            status: true,
+            activities: selectedFilters.activities || [],
+            recipients: selectedFilters.recipients || [],
+            occassions: selectedFilters.occassions || [],
+            ...filters,
+          },
+        };
 
-      const response = await fetch(`http://localhost:3000/experiences/get-paged`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+        const response = await fetch(
+          `http://localhost:3000/experiences/get-paged`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          }
+        );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-      const result: PagedExperiencesResponse[] = await response.json();
-      const data = result[0]; // The API returns an array with one object containing metadata and data
-      
-      if (data && data.data) {
-        setExperiences(data.data);
-        setPagination(prev => ({
-          ...prev,
-          total: data.metadata[0]?.total || 0,
-        }));
-      } else {
+        const result: PagedExperiencesResponse[] = await response.json();
+        const data = result[0]; // The API returns an array with one object containing metadata and data
+
+        if (data && data.data) {
+          setExperiences(data.data);
+          setPagination((prev) => ({
+            ...prev,
+            total: data.metadata[0]?.total || 0,
+          }));
+        } else {
+          setExperiences([]);
+          setPagination((prev) => ({ ...prev, total: 0 }));
+        }
+      } catch (error) {
+        console.error("Error fetching experiences:", error);
         setExperiences([]);
-        setPagination(prev => ({ ...prev, total: 0 }));
+        setPagination((prev) => ({ ...prev, total: 0 }));
+        setError("Failed to fetch experiences. Please try again later.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching experiences:", error);
-      setExperiences([]);
-      setPagination(prev => ({ ...prev, total: 0 }));
-      setError("Failed to fetch experiences. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.pageIndex, pagination.pageSize, searchQuery]);
+    },
+    [pagination.pageIndex, pagination.pageSize, searchQuery]
+  );
 
   useEffect(() => {
     fetchExperiences();
@@ -86,7 +90,7 @@ export default function ExperiencesPage() {
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-    setPagination(prev => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
   }, []);
 
   const handleFilterChange = (filter: string, selectedOptions: string[]) => {
@@ -94,7 +98,7 @@ export default function ExperiencesPage() {
       ...prev,
       [filter]: selectedOptions,
     }));
-    setPagination(prev => ({ ...prev, pageIndex: 1 })); // Reset to first page on filter change
+    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on filter change
   };
 
   // Transform API experiences to Listing format for ListingCard component
@@ -102,14 +106,22 @@ export default function ExperiencesPage() {
     return experiences.map((exp) => ({
       id: exp._id,
       slug: exp.slug,
-      imageSrc: exp.images?.[0] || '/images/placeholder.jpg',
+      imageSrc: exp.images?.[0] || "/images/placeholder.jpg",
       title: exp.title,
-      location: exp.location ? `${exp.location.city}, ${exp.location.state}` : 'Location not specified',
-      duration: exp.duration ? `${exp.duration} minutes` : 'Duration not specified',
-      price: exp.price ? `${exp.price.currency} ${exp.price.amount}` : 'Price not specified',
-      activity: exp.category?.name || 'Experience',
-      recipient: 'All ages',
-      occasion: 'Any occasion',
+      location: exp.location
+        ? `${exp.location.city}, ${exp.location.state}`
+        : "Location not specified",
+      duration: exp.rates
+        ? `${Math.min(...exp.rates.map((rate) => rate.duration))} minutes`
+        : "Duration not specified",
+      price: exp.rates
+        ? `${exp.rates[0].price.currency} ${Math.min(
+            ...exp.rates.map((rate) => rate.price.amount)
+          )}`
+        : "Price not specified",
+      activity: exp.category?.name || "Experience",
+      recipient: "All ages",
+      occasion: "Any occasion",
     }));
   };
 
@@ -117,17 +129,24 @@ export default function ExperiencesPage() {
     const matchesFilters = Object.entries(selectedFilters).every(
       ([filter, selectedOptions]) => {
         if (selectedOptions.length === 0) return true;
-        
+
         switch (filter) {
           case "Location":
             if (!experience.location) return false;
-            return selectedOptions.some(option => 
-              experience.location.city.toLowerCase().includes(option.toLowerCase()) ||
-              experience.location.state.toLowerCase().includes(option.toLowerCase())
+            return selectedOptions.some(
+              (option) =>
+                experience.location.city
+                  .toLowerCase()
+                  .includes(option.toLowerCase()) ||
+                experience.location.state
+                  .toLowerCase()
+                  .includes(option.toLowerCase())
             );
           case "Price":
-            if (!experience.price) return false;
-            const priceValue = experience.price.amount;
+            if (!experience.rates) return false;
+            const priceValue = Math.min(
+              ...experience.rates.map((rate) => rate.price.amount)
+            );
             return selectedOptions.some((option) => {
               const [min, max] = option
                 .split(" - ")
@@ -137,18 +156,21 @@ export default function ExperiencesPage() {
                 : priceValue >= min;
             });
           case "activities":
-            if (!experience.activities || experience.activities.length === 0) return false;
-            return selectedOptions.some(option => 
+            if (!experience.activities || experience.activities.length === 0)
+              return false;
+            return selectedOptions.some((option) =>
               experience.activities.includes(option)
             );
           case "recipients":
-            if (!experience.recipients || experience.recipients.length === 0) return false;
-            return selectedOptions.some(option => 
+            if (!experience.recipients || experience.recipients.length === 0)
+              return false;
+            return selectedOptions.some((option) =>
               experience.recipients.includes(option)
             );
           case "occassions":
-            if (!experience.occassions || experience.occassions.length === 0) return false;
-            return selectedOptions.some(option => 
+            if (!experience.occassions || experience.occassions.length === 0)
+              return false;
+            return selectedOptions.some((option) =>
               experience.occassions.includes(option)
             );
           default:
@@ -172,7 +194,7 @@ export default function ExperiencesPage() {
             onFilterChange={handleFilterChange}
           />
         </div>
-        
+
         <div className="text-center py-8">
           <p className="text-gray-500">Loading experiences...</p>
         </div>
@@ -190,9 +212,11 @@ export default function ExperiencesPage() {
             onFilterChange={handleFilterChange}
           />
         </div>
-        
+
         <div className="text-center py-8">
-          <p className="text-red-600">Failed to load experiences. Please try again later.</p>
+          <p className="text-red-600">
+            Failed to load experiences. Please try again later.
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -220,7 +244,6 @@ export default function ExperiencesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
           {listings.map((listing) => {
-            console.log("Rendering listing card with ID:", listing.id);
             return (
               <ListingCard
                 key={listing.id}

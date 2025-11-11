@@ -13,26 +13,40 @@ import {
   Lock,
   CheckCircle,
   AlertCircle,
+  Info,
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { CheckoutFormData } from "@/types";
-import axios from "axios"; // Import axios
+import { CheckoutFormData, GiftCheckoutDetails } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 type CheckoutStep = "details" | "payment" | "review" | "confirmation";
 
+interface GiftDetails {
+  recipientEmail: string;
+  message: string;
+}
+
 export default function CheckoutPage() {
+  const { user } = useAuth();
   const { state, clearCart } = useCart();
   const router = useRouter();
+  if (!user) {
+    router.push("/auth/login");
+    return;
+  }
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("details");
   const [formData, setFormData] = useState<CheckoutFormData>({
-    firstName: "",
-    lastName: "",
-    email: "",
+    firstName: user.firstName ?? "",
+    lastName: user.lastName ?? "",
+    email: user.email ?? "",
     phone: "",
     specialRequests: "",
   });
+  const [giftDetails, setGiftDetails] = useState<Record<string, GiftDetails>>(
+    {}
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null); // Add error state
 
@@ -45,6 +59,17 @@ export default function CheckoutPage() {
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleGiftInputChange = (
+    itemId: string,
+    field: keyof GiftDetails,
+    value: string
+  ) => {
+    setGiftDetails((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], [field]: value },
+    }));
   };
 
   const handleNext = () => {
@@ -74,6 +99,15 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items: state.items,
           customer: formData,
+          gifts: state.items
+            .filter((item) => item.isGift)
+            .map(
+              (item) =>
+                ({
+                  ...giftDetails[item.id],
+                  itemId: item.id,
+                } as GiftCheckoutDetails)
+            ),
         }),
       });
 
@@ -132,7 +166,9 @@ export default function CheckoutPage() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="firstName">First Name</Label>
+            <Label htmlFor="firstName" className="mb-1">
+              First Name
+            </Label>
             <Input
               id="firstName"
               value={formData.firstName}
@@ -141,7 +177,9 @@ export default function CheckoutPage() {
             />
           </div>
           <div>
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="lastName" className="mb-1">
+              Last Name
+            </Label>
             <Input
               id="lastName"
               value={formData.lastName}
@@ -151,7 +189,9 @@ export default function CheckoutPage() {
           </div>
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="mb-1">
+            Email
+          </Label>
           <Input
             id="email"
             type="email"
@@ -161,7 +201,9 @@ export default function CheckoutPage() {
           />
         </div>
         <div>
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="phone" className="mb-1">
+            Phone Number
+          </Label>
           <Input
             id="phone"
             type="tel"
@@ -171,7 +213,9 @@ export default function CheckoutPage() {
           />
         </div>
         <div>
-          <Label htmlFor="specialRequests">Special Requests (Optional)</Label>
+          <Label htmlFor="specialRequests" className="mb-1">
+            Special Requests (Optional)
+          </Label>
           <Textarea
             id="specialRequests"
             value={formData.specialRequests}
@@ -183,6 +227,69 @@ export default function CheckoutPage() {
           />
         </div>
       </CardContent>
+      {state.items.some((item) => item.isGift && !item.redeemedBookingId) && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Gift Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {state.items
+              .filter((item) => item.isGift)
+              .map((item) => (
+                <div key={item.id} className="p-4 border rounded-lg space-y-4">
+                  <div className="font-medium">
+                    <h4>For: {item.title}</h4>
+                    <p className="text-muted-foreground text-sm">
+                      Duration: {item.duration}
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      Quantity: {item.quantity}
+                    </p>
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor={`recipientEmail-${item.id}`}
+                      className="mb-1"
+                    >
+                      Recipient's Email
+                    </Label>
+                    <Input
+                      id={`recipientEmail-${item.id}`}
+                      type="email"
+                      value={giftDetails[item.id]?.recipientEmail || ""}
+                      onChange={(e) =>
+                        handleGiftInputChange(
+                          item.id,
+                          "recipientEmail",
+                          e.target.value
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`message-${item.id}`} className="mb-1">
+                      Message
+                    </Label>
+                    <Textarea
+                      id={`message-${item.id}`}
+                      value={giftDetails[item.id]?.message || ""}
+                      onChange={(e) =>
+                        handleGiftInputChange(
+                          item.id,
+                          "message",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Message to the recipient..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      )}
     </Card>
   );
 
@@ -191,36 +298,49 @@ export default function CheckoutPage() {
       <CardHeader>
         <CardTitle>Payment Information</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-lg">
-          <CreditCard className="w-5 h-5 text-gray-600" />
-          <span className="text-sm text-gray-600">
-            Secure payment powered by Stripe
-          </span>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="cardNumber">Card Number</Label>
-            <Input id="cardNumber" placeholder="1234 5678 9012 3456" disabled />
+      {state.total > 0 ? (
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-lg">
+            <CreditCard className="w-5 h-5 text-gray-600" />
+            <span className="text-sm text-gray-600">
+              Secure payment powered by Stripe
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="expiry">Expiry Date</Label>
-              <Input id="expiry" placeholder="MM/YY" disabled />
+              <Label htmlFor="cardNumber">Card Number</Label>
+              <Input
+                id="cardNumber"
+                placeholder="1234 5678 9012 3456"
+                disabled
+              />
             </div>
-            <div>
-              <Label htmlFor="cvv">CVV</Label>
-              <Input id="cvv" placeholder="123" disabled />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="expiry">Expiry Date</Label>
+                <Input id="expiry" placeholder="MM/YY" disabled />
+              </div>
+              <div>
+                <Label htmlFor="cvv">CVV</Label>
+                <Input id="cvv" placeholder="123" disabled />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Lock className="w-4 h-4" />
-          <span>Your payment information is encrypted and secure</span>
-        </div>
-      </CardContent>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Lock className="w-4 h-4" />
+            <span>Your payment information is encrypted and secure</span>
+          </div>
+        </CardContent>
+      ) : (
+        <CardContent className="flex items-center justify-center h-48">
+          <div className="text-lg font-medium text-muted-foreground flex gap-2">
+            <Info />
+            Payment info is not required for this purchase
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 
@@ -244,11 +364,17 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold">{item.title}</h4>
-                  <p className="text-sm text-gray-600">
-                    {format(new Date(item.date), "PPP")}
-                    {item.time &&
-                      ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
-                  </p>
+                  {item.isGift && !item.redeemedBookingId ? (
+                    <p className="text-sm font-semibold text-orange-500">
+                      Gift Voucher
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      {item.date && format(new Date(item.date), "PPP")}
+                      {item.time &&
+                        ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-600">
                     Quantity: {item.quantity}
                   </p>
@@ -288,6 +414,25 @@ export default function CheckoutPage() {
         </CardContent>
       </Card>
 
+      {state.items.some((item) => item.isGift && !item.redeemedBookingId) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Gift Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {state.items
+              .filter((item) => item.isGift)
+              .map((item) => (
+                <div key={item.id} className="border-b pb-2">
+                  <p className="font-semibold">{item.title}</p>
+                  <p>Recipient: {giftDetails[item.id]?.recipientEmail}</p>
+                  <p>Message: {giftDetails[item.id]?.message}</p>
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Payment Summary</CardTitle>
@@ -298,6 +443,12 @@ export default function CheckoutPage() {
               <span>Subtotal</span>
               <span>${state.subtotal.toFixed(2)}</span>
             </div>
+            {state.giftTotal != 0 && (
+              <div className="flex justify-between text-destructive">
+                <span>Gifted Items Price Reduction</span>
+                <span>${(state.giftTotal ?? 0).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-gray-600">
               <span>Taxes</span>
               <span>${state.taxes.toFixed(2)}</span>
@@ -400,7 +551,10 @@ export default function CheckoutPage() {
                   (!formData.firstName ||
                     !formData.lastName ||
                     !formData.email ||
-                    !formData.phone)) ||
+                    !formData.phone ||
+                    state.items
+                      .filter((i) => i.isGift)
+                      .some((i) => !giftDetails[i.id]?.recipientEmail))) ||
                 isProcessing
               }
               className="bg-orange-500 hover:bg-orange-600"

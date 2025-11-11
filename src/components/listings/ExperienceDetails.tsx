@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageCarousel } from "./ImageCarousel";
-import { BookingForm, BookingData } from "./BookingForm";
+import { BookingForm } from "./BookingForm";
 import { HeaderInfo } from "./HeaderInfo";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { ImportantInfoTab } from "./tabs/ImportantInfoTab";
 import { LocationTab } from "./tabs/LocationTab";
 import { ReviewsTab } from "./tabs/ReviewsTab";
 import { ApiExperience, ApiTime, Review, ReviewStat } from "@/types";
-import axios from "axios";
 
 const REVIEWS_PER_PAGE = 5;
 
@@ -35,6 +34,7 @@ export default function ExperienceDetails({
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [sortOption, setSortOption] = useState("newest");
+  const [activeBookingTab, setActiveBookingTab] = useState("booking");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(!initialData);
   const [reviewsLoading, setReviewsLoading] = useState(false);
@@ -49,7 +49,6 @@ export default function ExperienceDetails({
       const reviewsResponse = await fetch(
         `/api/reviews/experiences/${experienceId}?sortBy=${sortOption}&page=${pageNum}&limit=${REVIEWS_PER_PAGE}`
       );
-      console.log(loadingMore);
       if (!reviewsResponse.ok) {
         throw new Error(`HTTP error! status: ${reviewsResponse.status}`);
       }
@@ -125,11 +124,20 @@ export default function ExperienceDetails({
     if (!experience) return;
     try {
       const dateString = date.toISOString();
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings/availability/${experience._id}?date=${dateString}`
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings/availability/${experience._id}?date=${dateString}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            cache: "no-store",
+          },
+        }
       );
-      setAvailableTimes(response.data.availableTimes);
-      setIsDateFullyBooked(response.data.fullyBooked);
+      const data = await response.json();
+
+      setAvailableTimes(data.availableTimes);
+      setIsDateFullyBooked(data.fullyBooked);
     } catch (error) {
       console.error("Error fetching availability:", error);
       // Fallback to all times if availability check fails
@@ -200,7 +208,6 @@ export default function ExperienceDetails({
 
   const handleHelpful = async (reviewId: string) => {
     try {
-      console.log("Marking review as helpful:", reviewId);
       const response = await fetch(`/api/reviews/${reviewId}/helpful`, {
         method: "PATCH",
       });
@@ -208,7 +215,6 @@ export default function ExperienceDetails({
         throw new Error("Failed to mark review as helpful");
       }
       const updatedReview = await response.json();
-      console.log("Updated review:", updatedReview);
       setReviews((prevReviews) =>
         prevReviews.map((review) =>
           review._id === reviewId ? updatedReview : review
@@ -221,7 +227,6 @@ export default function ExperienceDetails({
 
   const handleUnhelpful = async (reviewId: string) => {
     try {
-      console.log("Marking review as unhelpful:", reviewId);
       const response = await fetch(`/api/reviews/${reviewId}/unhelpful`, {
         method: "PATCH",
       });
@@ -236,47 +241,6 @@ export default function ExperienceDetails({
       );
     } catch (err) {
       console.error("Error marking review as unhelpful:", err);
-    }
-  };
-
-  const handleReport = (reviewId: string) => {
-    console.log("Reported review:", reviewId);
-  };
-
-  // Handler for booking submissions
-  const handleBooking = async (bookingData: BookingData) => {
-    console.log("Booking submitted:", bookingData);
-    try {
-      // This is where you would collect user details (name, email, etc.)
-      // For now, I'll use placeholder data.
-      const bookingPayload = {
-        ...bookingData,
-        experienceId: experience._id,
-        selectedDate: bookingData.date,
-        selectedTime: bookingData.time,
-        name: "Test User", // Placeholder
-        email: "test@example.com", // Placeholder
-        phoneNumber: "1234567890", // Placeholder
-      };
-
-      // Use the correct backend URL
-      const response = await axios.post(
-        "http://localhost:8080/api/bookings",
-        bookingPayload
-      );
-
-      if (response.status === 201) {
-        alert(`Booking successful! Your booking ID is ${response.data._id}`);
-        // Re-fetch availability for the date to update the UI
-        if (bookingData.date) {
-          fetchAvailabilityForDate(bookingData.date);
-        }
-      }
-    } catch (error: any) {
-      console.error("Booking failed:", error);
-      alert(
-        `Booking failed: ${error.response?.data?.message || error.message}`
-      );
     }
   };
 
@@ -308,23 +272,49 @@ export default function ExperienceDetails({
         {/* Image Carousel Component */}
         <ImageCarousel images={experience.images} altText={experience.title} />
 
-        <BookingForm
-          experienceId={experience._id}
-          title={experience.title}
-          image={experience.images[0]}
-          location={{
-            city: experience.location.city,
-            country: experience.location.country,
-          }}
-          maxParticipants={experience.maxParticipants}
-          onBooking={handleBooking} // Pass the real booking handler
-          showTimeSelector={true}
-          rates={experience.rates}
-          availableDates={experience.availableDates.dates}
-          availableTimes={availableTimes} // Pass dynamic available times
-          onDateChange={fetchAvailabilityForDate} // Pass handler to fetch availability
-          isDateFullyBooked={isDateFullyBooked}
-        />
+        <Tabs value={activeBookingTab} onValueChange={setActiveBookingTab}>
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="booking">Book Now</TabsTrigger>
+            <TabsTrigger value="gift">Book as a Gift</TabsTrigger>
+          </TabsList>
+          <TabsContent value="booking">
+            <BookingForm
+              experienceId={experience._id}
+              title={experience.title}
+              image={experience.images[0]}
+              location={{
+                city: experience.location.city,
+                country: experience.location.country,
+              }}
+              maxParticipants={experience.maxParticipants}
+              showTimeSelector={true}
+              rates={experience.rates}
+              availableDates={experience.availableDates.dates}
+              availableTimes={availableTimes} // Pass dynamic available times
+              onDateChange={fetchAvailabilityForDate} // Pass handler to fetch availability
+              isDateFullyBooked={isDateFullyBooked}
+            />
+          </TabsContent>
+          <TabsContent value="gift">
+            <BookingForm
+              experienceId={experience._id}
+              title={experience.title}
+              image={experience.images[0]}
+              location={{
+                city: experience.location.city,
+                country: experience.location.country,
+              }}
+              maxParticipants={experience.maxParticipants}
+              showTimeSelector={true}
+              rates={experience.rates}
+              availableDates={experience.availableDates.dates}
+              availableTimes={availableTimes}
+              onDateChange={fetchAvailabilityForDate}
+              isDateFullyBooked={isDateFullyBooked}
+              isGiftForm={true}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <HeaderInfo

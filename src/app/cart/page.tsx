@@ -10,8 +10,10 @@ import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CartPage() {
+  const { user } = useAuth();
   const { state, removeItem, updateQuantity, clearCart } = useCart();
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
@@ -27,6 +29,10 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
     router.push("/checkout");
   };
 
@@ -66,10 +72,15 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {state.items.map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <CardContent className="p-6">
+              <Card key={item.id} className="overflow-hidden relative">
+                {item.isGift && (
+                  <p className="text-sm font-semibold text-orange-500 bg-orange-100 rounded-full w-fit px-2 py-1 border-orange-500 absolute top-2 right-2">
+                    Gift Voucher
+                  </p>
+                )}
+                <CardContent className="m-6 h-32">
                   <div className="flex gap-4">
-                    <div className="relative w-24 h-24 flex-shrink-0">
+                    <div className="relative size-32 flex-shrink-0 border rounded-lg">
                       <Image
                         src={item.image}
                         alt={item.title}
@@ -78,26 +89,26 @@ export default function CartPage() {
                       />
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg mb-1">
+                    <div className="flex-1 min-w-0 justify-between">
+                      <h3 className="font-semibold text-md mb-1">
                         {item.title}
                       </h3>
-                      <p className="text-gray-600 text-sm mb-2">
+                      <p className="text-muted-foreground text-sm mb-2">
                         {item.location.city}, {item.location.country}
                       </p>
+                      <p className="text-gray-600 text-sm font-medium mb-2">
+                        Duration: {item.duration}
+                      </p>
                       <p className="text-gray-600 text-sm mb-2">
-                        {format(item.date, "PPP")}
+                        {item.date && format(new Date(item.date), "PPP")}
                         {item.time &&
                           ` at ${item.time.hour}:${item.time.minute} ${item.time.period}`}
                       </p>
-                      <p className="text-gray-600 text-sm">
-                        Duration: {item.duration}
-                      </p>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end justify-between">
                       <div className="text-right">
-                        <p className="font-semibold text-lg">
+                        <p className="font-semibold text-2xl font-mono">
                           ${(item.price * item.quantity).toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-500">
@@ -105,47 +116,49 @@ export default function CartPage() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleQuantityChange(item.id, item.quantity - 1)
-                          }
-                          disabled={
-                            item.quantity <= 1 || isUpdating === item.id
-                          }
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
+                      {!item.redeemedBookingId && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleQuantityChange(item.id, item.quantity - 1)
+                            }
+                            disabled={
+                              item.quantity <= 1 || isUpdating === item.id
+                            }
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
 
-                        <Input
-                          type="number"
-                          min="1"
-                          max={item.maxParticipants}
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const newQuantity = parseInt(e.target.value) || 1;
-                            handleQuantityChange(item.id, newQuantity);
-                          }}
-                          className="w-16 text-center"
-                          disabled={isUpdating === item.id}
-                        />
+                          <Input
+                            type="number"
+                            min="1"
+                            max={item.maxParticipants}
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const newQuantity = parseInt(e.target.value) || 1;
+                              handleQuantityChange(item.id, newQuantity);
+                            }}
+                            className="w-16 text-center"
+                            disabled={isUpdating === item.id}
+                          />
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleQuantityChange(item.id, item.quantity + 1)
-                          }
-                          disabled={
-                            item.quantity >= item.maxParticipants ||
-                            isUpdating === item.id
-                          }
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleQuantityChange(item.id, item.quantity + 1)
+                            }
+                            disabled={
+                              item.quantity >= item.maxParticipants ||
+                              isUpdating === item.id
+                            }
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
 
                       <Button
                         variant="ghost"
@@ -184,6 +197,12 @@ export default function CartPage() {
                     <span>Subtotal ({state.totalItems} items)</span>
                     <span>${state.subtotal.toFixed(2)}</span>
                   </div>
+                  {state.giftTotal != 0 && (
+                    <div className="flex justify-between text-destructive">
+                      <span>Gifted Items Price Reduction</span>
+                      <span>${(state.giftTotal ?? 0).toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Taxes</span>
                     <span>${state.taxes.toFixed(2)}</span>
