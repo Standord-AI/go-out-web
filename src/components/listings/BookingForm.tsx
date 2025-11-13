@@ -76,11 +76,7 @@ export function BookingForm({
   const [quantity, setQuantity] = useState(selectedQuantity || 1);
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<ApiTime>();
-  const [selectedRate, setSelectedRate] = useState<ApiRate | undefined>(
-    rates.find(
-      (r) => r.duration === Math.min(...rates.map((rate) => rate.duration))
-    )
-  );
+  const [selectedRate, setSelectedRate] = useState<ApiRate | undefined>();
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const { addItem, isInCart } = useCart();
 
@@ -154,6 +150,24 @@ export function BookingForm({
 
     addItem(cartItem);
   };
+
+  useEffect(() => {
+    if (rates.length === 0) {
+      setSelectedRate(undefined);
+      return;
+    }
+
+    const preferred =
+      (selectedDuration &&
+        rates.find((rate) => rate.duration === selectedDuration)) ||
+      rates.reduce(
+        (shortest, rate) =>
+          rate.duration < shortest.duration ? rate : shortest,
+        rates[0]
+      );
+
+    setSelectedRate(preferred);
+  }, [rates, selectedDuration]);
 
   const isAlreadyInCart = isInCart(experienceId);
 
@@ -267,7 +281,11 @@ export function BookingForm({
               </label>
               <Select
                 onValueChange={handleRateSelect}
-                defaultValue={selectedDuration ? selectedDuration.toString() : selectedRate?.duration.toString()}
+                defaultValue={
+                  selectedDuration
+                    ? selectedDuration.toString()
+                    : selectedRate?.duration.toString()
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select duration" />

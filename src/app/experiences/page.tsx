@@ -24,65 +24,61 @@ export default function ExperiencesPage() {
     total: 0,
   });
 
-  const fetchExperiences = useCallback(
-    async (filters = {}) => {
-      try {
-        setLoading(true);
-        const requestBody = {
-          pageIndex: pagination.pageIndex,
-          pageSize: pagination.pageSize,
-          sortField: "createdAt",
-          sortOrder: -1,
-          filters: {
-            searchText: searchQuery || "",
-            archived: false,
-            status: true,
-            activities: selectedFilters.activities || [],
-            recipients: selectedFilters.recipients || [],
-            occassions: selectedFilters.occassions || [],
-            ...filters,
+  const fetchExperiences = useCallback(async () => {
+    try {
+      setLoading(true);
+      const requestBody = {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        sortField: "createdAt",
+        sortOrder: -1,
+        filters: {
+          searchText: searchQuery || "",
+          archived: false,
+          status: true,
+          activities: selectedFilters.activities || [],
+          recipients: selectedFilters.recipients || [],
+          occassions: selectedFilters.occassions || [],
+        },
+      };
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/experiences/get-paged`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        };
-
-        const response = await fetch(
-          `http://localhost:3000/experiences/get-paged`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          body: JSON.stringify(requestBody),
         }
+      );
 
-        const result: PagedExperiencesResponse[] = await response.json();
-        const data = result[0]; // The API returns an array with one object containing metadata and data
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-        if (data && data.data) {
-          setExperiences(data.data);
-          setPagination((prev) => ({
-            ...prev,
-            total: data.metadata[0]?.total || 0,
-          }));
-        } else {
-          setExperiences([]);
-          setPagination((prev) => ({ ...prev, total: 0 }));
-        }
-      } catch (error) {
-        console.error("Error fetching experiences:", error);
+      const result: PagedExperiencesResponse[] = await response.json();
+      const data = result[0]; // The API returns an array with one object containing metadata and data
+
+      if (data && data.data) {
+        setExperiences(data.data);
+        setPagination((prev) => ({
+          ...prev,
+          total: data.metadata[0]?.total || 0,
+        }));
+      } else {
         setExperiences([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
-        setError("Failed to fetch experiences. Please try again later.");
-      } finally {
-        setLoading(false);
       }
-    },
-    [pagination.pageIndex, pagination.pageSize, searchQuery]
-  );
+    } catch (error) {
+      console.error("Error fetching experiences:", error);
+      setExperiences([]);
+      setPagination((prev) => ({ ...prev, total: 0 }));
+      setError("Failed to fetch experiences. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize, searchQuery, selectedFilters]);
 
   useEffect(() => {
     fetchExperiences();

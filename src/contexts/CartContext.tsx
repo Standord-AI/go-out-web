@@ -159,7 +159,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         // Convert date strings back to Date objects
         const itemsWithDates = parsedCart.items.map((item: any) => ({
           ...item,
-          date: new Date(item.date),
+          date: item.date ? new Date(item.date) : undefined,
         }));
         dispatch({
           type: "LOAD_CART",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,18 +32,25 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const { state, clearCart } = useCart();
   const router = useRouter();
-  if (!user) {
-    router.push("/auth/login");
-    return;
-  }
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("details");
-  const [formData, setFormData] = useState<CheckoutFormData>({
-    firstName: user.firstName ?? "",
-    lastName: user.lastName ?? "",
-    email: user.email ?? "",
+  const [formData, setFormData] = useState<CheckoutFormData>(() => ({
+    firstName: user?.firstName ?? "",
+    lastName: user?.lastName ?? "",
+    email: user?.email ?? "",
     phone: "",
     specialRequests: "",
-  });
+  }));
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/auth/login");
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return null;
+  }
+
   const [giftDetails, setGiftDetails] = useState<Record<string, GiftDetails>>(
     {}
   );
@@ -101,13 +108,14 @@ export default function CheckoutPage() {
           customer: formData,
           gifts: state.items
             .filter((item) => item.isGift)
-            .map(
-              (item) =>
-                ({
-                  ...giftDetails[item.id],
-                  itemId: item.id,
-                } as GiftCheckoutDetails)
-            ),
+            .map((item) => ({
+              itemId: item.id,
+              recipientEmail: giftDetails[item.id]?.recipientEmail ?? "",
+              message: giftDetails[item.id]?.message || undefined,
+              senderName: [formData.firstName, formData.lastName]
+                .filter(Boolean)
+                .join(" "),
+            })),
         }),
       });
 

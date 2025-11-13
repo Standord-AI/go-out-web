@@ -36,8 +36,11 @@ export async function POST(req: Request) {
       if (item.isGift === undefined || item.isGift === false) {
         payload.status = "CONFIRMED";
       } else {
-        const gift = gifts.find(async (gift: any) => gift.id === item.id);
-        payload.isGift = item.isGift;
+        const gift = gifts?.find((gift: any) => gift.id === item.id);
+        if (!gift) {
+          throw new Error(`Gift details missing for cart item ${item.id}`);
+        }
+        payload.isGift = true;
         payload.receiverEmail = gift.recipientEmail;
         payload.giftMessage = gift.message;
       }
