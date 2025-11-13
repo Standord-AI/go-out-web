@@ -22,7 +22,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { ApiPrice, ApiRate, ApiTime, CartItem } from "@/types";
+import { ApiRate, ApiTime, CartItem } from "@/types";
 import { useRouter } from "next/navigation";
 
 interface BookingFormProps {
@@ -34,20 +34,26 @@ interface BookingFormProps {
     country: string;
   };
   maxParticipants: number;
-  onBooking?: (data: BookingData) => void;
+  onAddToCart?: (data: BookingData) => void;
   showTimeSelector?: boolean;
+  isGiftForm?: boolean;
   rates?: ApiRate[];
   availableDates?: Date[];
   availableTimes?: ApiTime[];
   onDateChange: (date: Date) => void; // Callback to fetch availability
   isDateFullyBooked: boolean;
+  selectedDuration?: number;
+  selectedQuantity?: number;
 }
 
 export interface BookingData {
   quantity: number;
-  date: Date | undefined;
+  date?: Date | undefined;
   time?: ApiTime;
   duration: number;
+  isGift?: boolean;
+  price: number;
+  currency: string;
 }
 
 export function BookingForm({
@@ -56,24 +62,23 @@ export function BookingForm({
   image,
   location,
   maxParticipants,
-  onBooking,
+  onAddToCart,
   showTimeSelector = false,
+  isGiftForm = false,
   rates = [],
   availableDates = [],
   availableTimes = [],
   onDateChange,
   isDateFullyBooked,
+  selectedDuration,
+  selectedQuantity,
 }: BookingFormProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(selectedQuantity || 1);
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<ApiTime>();
-  const [selectedRate, setSelectedRate] = useState<ApiRate | undefined>(
-    rates.find(
-      (r) => r.duration === Math.min(...rates.map((rate) => rate.duration))
-    )
-  );
+  const [selectedRate, setSelectedRate] = useState<ApiRate | undefined>();
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const { addItem, isInCart } = useCart();
-  const router = useRouter();
 
   useEffect(() => {
     // Reset time when date changes
@@ -106,26 +111,29 @@ export function BookingForm({
     });
   };
 
-  // Handle booking submission
-  const handleBooking = () => {
-    if (onBooking && date && selectedRate) {
-      onBooking({
+  // Handle add to cart
+  const handleAddToCart = () => {
+    if (!selectedRate || (!date && !isGiftForm)) return;
+
+    if (onAddToCart) {
+      onAddToCart({
         quantity,
         date,
         time: showTimeSelector ? time : undefined,
         duration: selectedRate.duration,
+        isGift: isGiftForm,
+        price: selectedRate.price.amount,
+        currency: selectedRate.price.currency,
       });
+      return;
     }
-  };
-
-  // Handle add to cart
-  const handleAddToCart = () => {
-    if (!date || !selectedRate) return;
 
     const cartItem: CartItem = {
-      id: `${experienceId}-${date.toISOString()}-${time?.hour}:${time?.minute}${
-        time?.period
-      }`,
+      id: isGiftForm
+        ? `${experienceId}-gift`
+        : `${experienceId}-${date?.toISOString()}-${time?.hour}:${
+            time?.minute
+          }${time?.period}`,
       experienceId,
       title,
       image,
@@ -137,10 +145,29 @@ export function BookingForm({
       location,
       duration: selectedRate.duration.toString(),
       maxParticipants,
+      isGift: isGiftForm,
     };
 
     addItem(cartItem);
   };
+
+  useEffect(() => {
+    if (rates.length === 0) {
+      setSelectedRate(undefined);
+      return;
+    }
+
+    const preferred =
+      (selectedDuration &&
+        rates.find((rate) => rate.duration === selectedDuration)) ||
+      rates.reduce(
+        (shortest, rate) =>
+          rate.duration < shortest.duration ? rate : shortest,
+        rates[0]
+      );
+
+    setSelectedRate(preferred);
+  }, [rates, selectedDuration]);
 
   const isAlreadyInCart = isInCart(experienceId);
 
@@ -158,42 +185,51 @@ export function BookingForm({
         )}
 
         <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="date"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Select Available Dates
-            </label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Select a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  disabled={(d) =>
-                    d < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                    isDateUnavailable(d)
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          {!isGiftForm && (
+            <div>
+              <label
+                htmlFor="date"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Select Available Dates
+              </label>
+              <Popover
+                open={datePopoverOpen}
+                onOpenChange={setDatePopoverOpen}
+                modal={true}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Select a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(d) => {
+                      setDate(d);
+                      setDatePopoverOpen(false);
+                    }}
+                    disabled={(d) =>
+                      d < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                      isDateUnavailable(d)
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
 
-          {showTimeSelector && date && (
+          {showTimeSelector && date && !isGiftForm && (
             <div>
               <label
                 htmlFor="time"
@@ -245,7 +281,11 @@ export function BookingForm({
               </label>
               <Select
                 onValueChange={handleRateSelect}
-                defaultValue={selectedRate?.duration.toString()}
+                defaultValue={
+                  selectedDuration
+                    ? selectedDuration.toString()
+                    : selectedRate?.duration.toString()
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select duration" />
@@ -314,14 +354,22 @@ export function BookingForm({
               max participants: {maxParticipants}
             </p>
           </div>
-          
+
           <Button
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3"
             onClick={handleAddToCart}
-            disabled={!date || (showTimeSelector && !time) || isDateFullyBooked}
+            disabled={
+              (!date && !isGiftForm) ||
+              (showTimeSelector && !time && !isGiftForm) ||
+              (isDateFullyBooked && !isGiftForm)
+            }
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {isAlreadyInCart ? "Already in Cart" : "Add to Cart"}
+            {onAddToCart
+              ? "Redeem Gift"
+              : isAlreadyInCart
+              ? "Already in Cart"
+              : "Add to Cart"}
           </Button>
         </div>
       </CardContent>

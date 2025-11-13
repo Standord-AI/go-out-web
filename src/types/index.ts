@@ -453,7 +453,7 @@ export interface CartItem {
   price: number;
   currency: string;
   quantity: number;
-  date: Date;
+  date?: Date;
   time?: ApiTime;
   location: {
     city: string;
@@ -461,6 +461,9 @@ export interface CartItem {
   };
   duration: string;
   maxParticipants: number;
+  isGift?: boolean;
+  redeemedBookingId?: string;
+  oldPrice?: number;
 }
 
 export interface Cart {
@@ -480,6 +483,13 @@ export interface CheckoutFormData {
   email: string;
   phone: string;
   specialRequests?: string;
+}
+
+export interface GiftCheckoutDetails {
+  itemId: string;
+  recipientEmail: string;
+  message?: string;
+  senderName: string;
 }
 
 export interface PaymentMethod {
