@@ -18,14 +18,14 @@ import {
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { CheckoutFormData, GiftCheckoutDetails } from "@/types";
+import { CheckoutFormData } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
 type CheckoutStep = "details" | "payment" | "review" | "confirmation";
 
 interface GiftDetails {
-  recipientEmail: string;
-  message: string;
+  recipientEmail?: string;
+  message?: string;
 }
 
 export default function CheckoutPage() {
@@ -174,7 +174,7 @@ export default function CheckoutPage() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="firstName" className="mb-1">
+            <Label htmlFor="firstName" className="mb-2">
               First Name
             </Label>
             <Input
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
             />
           </div>
           <div>
-            <Label htmlFor="lastName" className="mb-1">
+            <Label htmlFor="lastName" className="mb-2">
               Last Name
             </Label>
             <Input
@@ -197,7 +197,7 @@ export default function CheckoutPage() {
           </div>
         </div>
         <div>
-          <Label htmlFor="email" className="mb-1">
+          <Label htmlFor="email" className="mb-2">
             Email
           </Label>
           <Input
@@ -209,7 +209,7 @@ export default function CheckoutPage() {
           />
         </div>
         <div>
-          <Label htmlFor="phone" className="mb-1">
+          <Label htmlFor="phone" className="mb-2">
             Phone Number
           </Label>
           <Input
@@ -221,7 +221,7 @@ export default function CheckoutPage() {
           />
         </div>
         <div>
-          <Label htmlFor="specialRequests" className="mb-1">
+          <Label htmlFor="specialRequests" className="mb-2">
             Special Requests (Optional)
           </Label>
           <Textarea
@@ -257,9 +257,9 @@ export default function CheckoutPage() {
                   <div>
                     <Label
                       htmlFor={`recipientEmail-${item.id}`}
-                      className="mb-1"
+                      className="mb-2"
                     >
-                      Recipient's Email
+                      Recipient's Email (Optional)
                     </Label>
                     <Input
                       id={`recipientEmail-${item.id}`}
@@ -276,8 +276,8 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor={`message-${item.id}`} className="mb-1">
-                      Message
+                    <Label htmlFor={`message-${item.id}`} className="mb-2">
+                      Message (Optional)
                     </Label>
                     <Textarea
                       id={`message-${item.id}`}
@@ -559,10 +559,7 @@ export default function CheckoutPage() {
                   (!formData.firstName ||
                     !formData.lastName ||
                     !formData.email ||
-                    !formData.phone ||
-                    state.items
-                      .filter((i) => i.isGift)
-                      .some((i) => !giftDetails[i.id]?.recipientEmail))) ||
+                    !formData.phone)) ||
                 isProcessing
               }
               className="bg-orange-500 hover:bg-orange-600"

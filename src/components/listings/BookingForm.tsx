@@ -130,7 +130,7 @@ export function BookingForm({
 
     const cartItem: CartItem = {
       id: isGiftForm
-        ? `${experienceId}-gift`
+        ? `${experienceId}-gift-${crypto.randomUUID()}`
         : `${experienceId}-${date?.toISOString()}-${time?.hour}:${
             time?.minute
           }${time?.period}`,
