@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { CartItem, Cart } from "@/types";
+import { CartItem } from "@/types";
 
 interface CartState {
   items: CartItem[];
@@ -155,9 +155,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedCart = localStorage.getItem("cart");
     if (savedCart) {
       try {
-        const parsedCart = JSON.parse(savedCart);
+        type PersistedCartItem = Omit<CartItem, "date"> & {
+          date?: string;
+        };
+        type PersistedCartState = Omit<CartState, "items"> & {
+          items: PersistedCartItem[];
+        };
+
+        const parsedCart = JSON.parse(savedCart) as PersistedCartState;
         // Convert date strings back to Date objects
-        const itemsWithDates = parsedCart.items.map((item: any) => ({
+        const itemsWithDates: CartItem[] = parsedCart.items.map((item) => ({
           ...item,
           date: item.date ? new Date(item.date) : undefined,
         }));

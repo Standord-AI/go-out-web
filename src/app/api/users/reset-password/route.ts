@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+interface ApiResponseData {
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -16,21 +22,22 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    let data: any = null;
-    const ct = response.headers.get("content-type") || "";
-    if (ct.includes("application/json")) {
-      data = await response.json().catch(() => null);
+    let data: ApiResponseData | null = null;
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = (await response.json().catch(() => null)) as ApiResponseData | null;
     }
 
     if (!response.ok) {
+      const errorMessage = data?.message || "Failed to reset password";
       return NextResponse.json(
-        { error: data.message || "Failed to reset password" },
+        { error: errorMessage },
         { status: response.status }
       );
     }
 
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
+    return NextResponse.json(data ?? {}, { status: 200 });
+  } catch (error: unknown) {
     console.error("Reset password API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

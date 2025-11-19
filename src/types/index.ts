@@ -426,7 +426,7 @@ export interface ApiExperience {
   occassions: string[];
   recipients: string[];
   activities: string[];
-  reviews: any[];
+  reviews: Review[];
   createdAt: string;
   updatedAt: string;
 }

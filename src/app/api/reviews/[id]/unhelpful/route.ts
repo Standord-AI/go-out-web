@@ -1,14 +1,31 @@
 import { config } from "@/lib/config";
 import { NextResponse } from "next/server";
 
-// PATCH /api/reviews/[id]/helpful - Mark a review as helpful
+const parseJsonSafely = async (
+  response: Response
+): Promise<Record<string, unknown> | null> => {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return null;
+  }
+
+  const data = await response.json().catch(() => null);
+  if (data && typeof data === "object") {
+    return data as Record<string, unknown>;
+  }
+  return null;
+};
+
+// PATCH /api/reviews/[id]/unhelpful - Mark a review as unhelpful
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+
     const response = await fetch(
-      `${config.backendApiUrl}/reviews/${params.id}/unhelpful`,
+      `${config.backendApiUrl}/reviews/${id}/unhelpful`,
       {
         method: "PATCH",
         headers: {
@@ -24,18 +41,21 @@ export async function PATCH(
       }
     );
 
-    const data = await response.json();
+    const data = await parseJsonSafely(response);
 
     if (!response.ok) {
+      const errorMessage =
+        (data?.message as string | undefined) ||
+        "Failed to mark review as unhelpful";
       return NextResponse.json(
-        { error: data.message || "Failed to mark review as unhelpful" },
+        { error: errorMessage },
         { status: response.status }
       );
     }
 
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
-    console.error(`Error marking review ${params.id} as unhelpful:`, error);
+    return NextResponse.json(data ?? {}, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Error marking review as unhelpful:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -3,7 +3,6 @@
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Map from "@/components/Map";
-import { useState, useEffect } from "react";
 
 interface LocationTabProps {
   address: string;

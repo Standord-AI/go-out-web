@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageCarousel } from "./ImageCarousel";
 import { BookingForm } from "./BookingForm";
@@ -43,36 +43,44 @@ export default function ExperienceDetails({
   const [availableTimes, setAvailableTimes] = useState<ApiTime[]>([]);
   const [isDateFullyBooked, setIsDateFullyBooked] = useState(false);
 
-  const fetchReviews = async (pageNum: number, shouldAppend = false) => {
-    try {
-      shouldAppend === false ? setReviewsLoading(true) : setLoadingMore(true);
-      const reviewsResponse = await fetch(
-        `/api/reviews/experiences/${experienceId}?sortBy=${sortOption}&page=${pageNum}&limit=${REVIEWS_PER_PAGE}`
-      );
-      if (!reviewsResponse.ok) {
-        throw new Error(`HTTP error! status: ${reviewsResponse.status}`);
+  const fetchReviews = useCallback(
+    async (pageNum: number, shouldAppend = false) => {
+      try {
+        if (shouldAppend) {
+          setLoadingMore(true);
+        } else {
+          setReviewsLoading(true);
+        }
+
+        const reviewsResponse = await fetch(
+          `/api/reviews/experiences/${experienceId}?sortBy=${sortOption}&page=${pageNum}&limit=${REVIEWS_PER_PAGE}`
+        );
+        if (!reviewsResponse.ok) {
+          throw new Error(`HTTP error! status: ${reviewsResponse.status}`);
+        }
+        const reviewsData: { reviews: Review[]; stats: ReviewStat } =
+          await reviewsResponse.json();
+
+        setReviews((prev) =>
+          shouldAppend ? [...prev, ...reviewsData.reviews] : reviewsData.reviews
+        );
+        setStats(reviewsData.stats);
+        setHasNextPage(reviewsData.reviews.length === REVIEWS_PER_PAGE);
+        setPage(pageNum);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setReviewsLoading(false);
+        setLoadingMore(false);
       }
-      const reviewsData: { reviews: Review[]; stats: ReviewStat } =
-        await reviewsResponse.json();
+    },
+    [experienceId, sortOption]
+  );
 
-      setReviews((prev) =>
-        shouldAppend ? [...prev, ...reviewsData.reviews] : reviewsData.reviews
-      );
-      setStats(reviewsData.stats);
-      setHasNextPage(reviewsData.reviews.length === REVIEWS_PER_PAGE);
-      setPage(pageNum);
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-    } finally {
-      setReviewsLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (initialData) {
       setExperience(initialData);
-      setAvailableTimes(initialData.availableTimes.times);
+      setAvailableTimes(initialData.availableTimes?.times ?? []);
       return;
     }
     try {
@@ -83,7 +91,7 @@ export default function ExperienceDetails({
       }
       const data: ApiExperience = await response.json();
       setExperience(data);
-      setAvailableTimes(data.availableTimes.times); // Initially set all times
+      setAvailableTimes(data.availableTimes?.times ?? []); // Initially set all times
     } catch (error) {
       console.error("Error fetching experience:", error);
       setError(
@@ -92,7 +100,7 @@ export default function ExperienceDetails({
     } finally {
       setLoading(false);
     }
-  };
+  }, [experienceId, initialData]);
 
   useEffect(() => {
     if (experienceId) {
@@ -100,25 +108,11 @@ export default function ExperienceDetails({
       setReviews([]); // Clear existing reviews
       fetchData();
     }
-  }, [experienceId, initialData]);
+  }, [experienceId, fetchData]);
 
   useEffect(() => {
-    const fetchReviewData = async () => {
-      try {
-        setReviewsLoading(true);
-        // experienceData passed from previous page
-        await fetchReviews(1);
-      } catch (error) {
-        console.error("Error fetching initial experience data:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to fetch experience"
-        );
-      } finally {
-        setReviewsLoading(false);
-      }
-    };
-    fetchReviewData();
-  }, [experienceId, initialData, sortOption]);
+    fetchReviews(1);
+  }, [fetchReviews]);
 
   const fetchAvailabilityForDate = async (date: Date) => {
     if (!experience) return;
@@ -134,14 +128,18 @@ export default function ExperienceDetails({
           },
         }
       );
-      const data = await response.json();
+      const data = (await response.json().catch(() => null)) as
+        | { availableTimes?: ApiTime[]; fullyBooked?: boolean }
+        | null;
 
-      setAvailableTimes(data.availableTimes);
-      setIsDateFullyBooked(data.fullyBooked);
-    } catch (error) {
+      setAvailableTimes(
+        data?.availableTimes ?? experience.availableTimes?.times ?? []
+      );
+      setIsDateFullyBooked(Boolean(data?.fullyBooked));
+    } catch (error: unknown) {
       console.error("Error fetching availability:", error);
       // Fallback to all times if availability check fails
-      setAvailableTimes(experience.availableTimes.times);
+      setAvailableTimes(experience.availableTimes?.times ?? []);
       setIsDateFullyBooked(false);
     }
   };
@@ -182,7 +180,6 @@ export default function ExperienceDetails({
     description: string;
   }) => {
     try {
-      setReviewsLoading(true);
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
@@ -199,8 +196,8 @@ export default function ExperienceDetails({
       }
 
       await fetchReviews(1);
-    } catch (err) {
-      console.error("Error adding review:", err);
+    } catch (error: unknown) {
+      console.error("Error adding review:", error);
     } finally {
       setReviewsLoading(false);
     }
@@ -214,14 +211,14 @@ export default function ExperienceDetails({
       if (!response.ok) {
         throw new Error("Failed to mark review as helpful");
       }
-      const updatedReview = await response.json();
+      const updatedReview = (await response.json()) as Review;
       setReviews((prevReviews) =>
         prevReviews.map((review) =>
           review._id === reviewId ? updatedReview : review
         )
       );
-    } catch (err) {
-      console.error("Error marking review as helpful:", err);
+    } catch (error: unknown) {
+      console.error("Error marking review as helpful:", error);
     }
   };
 
@@ -233,14 +230,14 @@ export default function ExperienceDetails({
       if (!response.ok) {
         throw new Error("Failed to mark review as unhelpful");
       }
-      const updatedReview = await response.json();
+      const updatedReview = (await response.json()) as Review;
       setReviews((prevReviews) =>
         prevReviews.map((review) =>
           review._id === reviewId ? updatedReview : review
         )
       );
-    } catch (err) {
-      console.error("Error marking review as unhelpful:", err);
+    } catch (error: unknown) {
+      console.error("Error marking review as unhelpful:", error);
     }
   };
 
@@ -262,7 +259,7 @@ export default function ExperienceDetails({
   };
 
   // Format location
-  const formatLocation = (location: any) => {
+  const formatLocation = (location: ApiExperience["location"]) => {
     return `${location.city}, ${location.state}`;
   };
 

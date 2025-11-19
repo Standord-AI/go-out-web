@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+interface ApiResponseData {
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
+const parseJsonSafely = async (
+  response: Response
+): Promise<ApiResponseData | null> => {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    return null;
+  }
+
+  const result = await response.json().catch(() => null);
+  if (result && typeof result === "object") {
+    return result as ApiResponseData;
+  }
+  return null;
+};
+
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from query params or headers (you might want to get this from JWT token)
     const url = new URL(request.url);
     const userId = url.searchParams.get("id");
 
@@ -30,21 +50,19 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    let data: any = null;
-    const ct = response.headers.get("content-type") || "";
-    if (ct.includes("application/json")) {
-      data = await response.json().catch(() => null);
-    }
+    const data = await parseJsonSafely(response);
 
     if (!response.ok) {
+      const errorMessage =
+        data?.message || "Failed to fetch user profile";
       return NextResponse.json(
-        { error: data.message || "Failed to fetch user profile" },
+        { error: errorMessage },
         { status: response.status }
       );
     }
 
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
+    return NextResponse.json(data ?? {}, { status: 200 });
+  } catch (error: unknown) {
     console.error("Get user profile API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -85,17 +103,19 @@ export async function PUT(request: NextRequest) {
       }
     );
 
-    const data = await response.json();
+    const data = await parseJsonSafely(response);
 
     if (!response.ok) {
+      const errorMessage =
+        data?.message || "Failed to update user profile";
       return NextResponse.json(
-        { error: data.message || "Failed to update user profile" },
+        { error: errorMessage },
         { status: response.status }
       );
     }
 
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
+    return NextResponse.json(data ?? {}, { status: 200 });
+  } catch (error: unknown) {
     console.error("Update user profile API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

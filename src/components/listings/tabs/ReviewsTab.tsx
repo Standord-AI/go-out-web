@@ -66,7 +66,11 @@ export function ReviewsTab({
   const [description, setDescription] = useState("");
 
   const handleDialogOpen = () => {
-    !user ? router.push("/auth/login") : setIsDialogOpen(true);
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+    setIsDialogOpen(true);
   };
 
   const [errors, setErrors] = useState<{
@@ -178,84 +182,93 @@ export function ReviewsTab({
             </div>
           ) : (
             <div className="space-y-6">
-              {reviews.map((review) =>
-                (() => {
-                  const isHelpful =
-                    user && review.helpfulUsers?.includes(user._id);
-                  const isUnhelpful =
-                    user && review.unhelpfulUsers?.includes(user._id);
-                  return (
-                    <div
-                      key={review._id}
-                      className="border-b border-gray-200 pb-6 flex flex-col gap-6"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex gap-3 items-center text-zinc-600">
-                          <UserCircle />
-                          <span className="font-medium text-lg">
-                            {review.userId.firstName}&nbsp;
-                            {review.userId.lastName}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-4 w-4 ${
-                                star <= review.rating
-                                  ? "text-yellow-400 fill-yellow-400"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <h4 className="text-lg font-semibold">
-                        {review.description ||
-                          `Rated by ${review.userId.firstName} ${review.userId.lastName}`}
-                      </h4>
-                      <span className="text-sm text-muted-foreground font-medium">
-                        {new Date(review.updatedAt).toLocaleDateString()}
-                      </span>
+              {reviews.map((review) => {
+                const isHelpful = user
+                  ? review.helpfulUsers?.includes(user._id) ?? false
+                  : false;
+                const isUnhelpful = user
+                  ? review.unhelpfulUsers?.includes(user._id) ?? false
+                  : false;
 
-                      <div className="flex items-center gap-4 text-sm">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`flex items-center gap-1 ${
-                            isHelpful ? "text-primary" : ""
-                          }`}
-                          onClick={() =>
-                            !user
-                              ? router.push("/auth/login")
-                              : onHelpful?.(review._id)
-                          }
-                          disabled={isHelpful != null ? isHelpful : false}
-                        >
-                          <ThumbsUp className="size-4" />
-                          Helpful ({review.helpfulCount})
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`flex items-center gap-1 ${
-                            isUnhelpful ? "text-destructive" : ""
-                          }`}
-                          onClick={() =>
-                            !user
-                              ? router.push("/auth/login")
-                              : onUnhelpful?.(review._id)
-                          }
-                          disabled={isUnhelpful != null ? isUnhelpful : false}
-                        >
-                          <ThumbsDown className="size-4" />
-                          Not Helpful ({review.unhelpfulCount})
-                        </Button>
+                const handleHelpfulClick = () => {
+                  if (!user) {
+                    router.push("/auth/login");
+                    return;
+                  }
+                  onHelpful?.(review._id);
+                };
+
+                const handleUnhelpfulClick = () => {
+                  if (!user) {
+                    router.push("/auth/login");
+                    return;
+                  }
+                  onUnhelpful?.(review._id);
+                };
+
+                return (
+                  <div
+                    key={review._id}
+                    className="border-b border-gray-200 pb-6 flex flex-col gap-6"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-3 items-center text-zinc-600">
+                        <UserCircle />
+                        <span className="font-medium text-lg">
+                          {review.userId.firstName}&nbsp;
+                          {review.userId.lastName}
+                        </span>
+                      </div>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= review.rating
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
                       </div>
                     </div>
-                  );
-                })()
-              )}
+                    <h4 className="text-lg font-semibold">
+                      {review.description ||
+                        `Rated by ${review.userId.firstName} ${review.userId.lastName}`}
+                    </h4>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      {new Date(review.updatedAt).toLocaleDateString()}
+                    </span>
+
+                    <div className="flex items-center gap-4 text-sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-1 ${
+                          isHelpful ? "text-primary" : ""
+                        }`}
+                        onClick={handleHelpfulClick}
+                        disabled={isHelpful}
+                      >
+                        <ThumbsUp className="size-4" />
+                        Helpful ({review.helpfulCount})
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-1 ${
+                          isUnhelpful ? "text-destructive" : ""
+                        }`}
+                        onClick={handleUnhelpfulClick}
+                        disabled={isUnhelpful}
+                      >
+                        <ThumbsDown className="size-4" />
+                        Not Helpful ({review.unhelpfulCount})
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
