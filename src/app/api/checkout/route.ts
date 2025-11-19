@@ -48,9 +48,7 @@ interface CheckoutRequestBody {
   gifts?: CheckoutGiftDetails[];
 }
 
-const isApiErrorResponse = (
-  value: unknown
-): value is { message?: string } =>
+const isApiErrorResponse = (value: unknown): value is { message?: string } =>
   typeof value === "object" && value !== null && "message" in value;
 
 const normaliseTimeValue = (time?: string | ApiTime): string => {
