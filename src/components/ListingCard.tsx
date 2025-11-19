@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface ListingCardProps {
-  id: string;
   slug: string;
   imageSrc: string;
   altText: string;
@@ -26,7 +25,6 @@ interface ListingCardProps {
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({
-  id,
   slug,
   imageSrc,
   altText,

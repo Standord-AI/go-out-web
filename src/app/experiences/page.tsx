@@ -244,7 +244,6 @@ export default function ExperiencesPage() {
               <ListingCard
                 key={listing.id}
                 slug={listing.slug}
-                id={listing.id}
                 imageSrc={listing.imageSrc}
                 altText={listing.title}
                 title={listing.title}

@@ -9,6 +9,7 @@ import { ArrowRight } from "lucide-react";
 import ListingCard from "../ListingCard";
 
 interface Experience {
+  slug: string;
   title: string;
   location: string;
   rating: number;
@@ -20,6 +21,7 @@ interface Experience {
 
 const experiences: Experience[] = [
   {
+    slug: "luxury-tea-tasting",
     title: "Luxury Tea Tasting",
     location: "Nuwara Eliya, Sri Lanka",
     rating: 4.8,
@@ -29,6 +31,7 @@ const experiences: Experience[] = [
     isFavorite: true,
   },
   {
+    slug: "scenic-train-ride",
     title: "Scenic Train Ride",
     location: "Ella, Sri Lanka",
     rating: 4.7,
@@ -38,6 +41,7 @@ const experiences: Experience[] = [
     isFavorite: false,
   },
   {
+    slug: "jungle-safari-adventure",
     title: "Jungle Safari Adventure",
     location: "Yala National Park, Sri Lanka",
     rating: 4.9,
@@ -47,6 +51,7 @@ const experiences: Experience[] = [
     isFavorite: false,
   },
   {
+    slug: "beachfront-candlelight-dinner",
     title: "Beachfront Candlelight Dinner",
     location: "Galle, Sri Lanka",
     rating: 4.6,
@@ -56,6 +61,7 @@ const experiences: Experience[] = [
     isFavorite: true,
   },
   {
+    slug: "yala-safari",
     title: "Yala Safari",
     location: "Yala National Park, Sri Lanka",
     rating: 3.5,
@@ -65,6 +71,7 @@ const experiences: Experience[] = [
     isFavorite: false,
   },
   {
+    slug: "sigiriya-sunrise",
     title: "Sigiriya Sunrise",
     location: "Sigiriya, Sri Lanka",
     rating: 4.4,
@@ -74,6 +81,7 @@ const experiences: Experience[] = [
     isFavorite: false,
   },
   {
+    slug: "pinnawala-elephant-orphanage",
     title: "Pinnawala Elephant Orphanage",
     location: "Pinnawala, Sri Lanka",
     rating: 4.9,
@@ -83,6 +91,7 @@ const experiences: Experience[] = [
     isFavorite: false,
   },
   {
+    slug: "kandy-cultural-tour",
     title: "Kandy Cultural Tour",
     location: "Kandy, Sri Lanka",
     rating: 4.7,
@@ -112,8 +121,8 @@ const DiscoverSection = () => {
           <div className="flex space-x-6 ml-6">
             {experiences.map((exp, index) => (
               <ListingCard
-                key={index}
-                id={index.toString()}
+                key={exp.slug ?? index}
+                slug={exp.slug}
                 title={exp.title}
                 location={exp.location}
                 duration={exp.duration || ""}

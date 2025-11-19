@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+interface ApiResponseData {
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -13,32 +19,40 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    let data: any = null;
-    const ct = response.headers.get("content-type") || "";
-    if (ct.includes("application/json")) {
-      data = await response.json().catch(() => null);
+    let data: ApiResponseData | null = null;
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = (await response.json().catch(() => null)) as ApiResponseData | null;
     }
 
     if (!response.ok) {
+      const errorMessage = data?.message || "Login failed";
       return NextResponse.json(
-        { error: data.message || "Login failed" },
+        { error: errorMessage },
         { status: response.status }
       );
     }
 
-    // Forward any Set-Cookie headers from the backend
-    const res = NextResponse.json(data, { status: 200 });
-    // getSetCookie is available in Next's Response headers implementation
+    const headersWithCookies = response.headers as Headers & {
+      getSetCookie?: () => string[];
+    };
+
     const setCookies =
-      (response.headers as any).getSetCookie?.() ??
-      (response.headers.get("set-cookie")
-        ? [response.headers.get("set-cookie") as string]
+      headersWithCookies.getSetCookie?.() ??
+      (headersWithCookies.get("set-cookie")
+        ? [headersWithCookies.get("set-cookie") as string]
         : []);
+
+    const res = NextResponse.json(data ?? {}, { status: 200 });
+
     for (const cookie of setCookies) {
-      if (cookie) res.headers.append("Set-Cookie", cookie);
+      if (cookie) {
+        res.headers.append("Set-Cookie", cookie);
+      }
     }
+
     return res;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Login API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

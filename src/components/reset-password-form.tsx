@@ -21,6 +21,13 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+
+interface ApiResponseData {
+  error?: string;
+  message?: string;
+  [key: string]: unknown;
+}
 
 export function ResetPasswordForm({
   className,
@@ -82,14 +89,16 @@ export function ResetPasswordForm({
         }),
       });
 
-      let data: any = null;
-      const ct = response.headers.get("content-type") || "";
-      if (ct.includes("application/json")) {
-        data = await response.json().catch(() => null);
+      let data: ApiResponseData | null = null;
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        data = (await response.json().catch(() => null)) as ApiResponseData | null;
       }
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to reset password");
+        const errorMessage =
+          data?.error || data?.message || "Failed to reset password";
+        throw new Error(errorMessage);
       }
 
       setMessage("Password reset successfully! Redirecting to login...");
@@ -245,17 +254,17 @@ export function ResetPasswordForm({
             </div>
             <div className="text-center text-sm mt-1">
               Remember your password?{" "}
-              <a href="/auth/login" className="underline underline-offset-4">
+              <Link href="/auth/login" className="underline underline-offset-4">
                 Sign in
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
         By clicking continue, you agree to our{" "}
-        <a href="/terms-of-service">Terms of Service</a> and{" "}
-        <a href="/privacy-policy">Privacy Policy</a>.
+        <Link href="/terms-of-service">Terms of Service</Link> and{" "}
+        <Link href="/privacy-policy">Privacy Policy</Link>.
       </div>
     </div>
   );

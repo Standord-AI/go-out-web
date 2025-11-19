@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { ApiExperience, ApiTime, CartItem } from "@/types";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { BookingForm, BookingData } from "@/components/listings/BookingForm";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -54,7 +55,7 @@ interface redeemGiftProps {
   };
 }
 
-export default function Page() {
+function GiftRedeemContent() {
   const [gift, setGift] = useState<redeemGiftProps | null>(null);
   const [availableTimes, setAvailableTimes] = useState<ApiTime[]>([]);
   const [isDateFullyBooked, setIsDateFullyBooked] = useState(false);
@@ -88,16 +89,23 @@ export default function Page() {
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Something went wrong");
+          const errorData = await response.json().catch(() => null);
+          const errorMessage =
+            errorData && typeof errorData === "object" && "message" in errorData
+              ? (errorData as { message?: string }).message
+              : undefined;
+          throw new Error(errorMessage || "Something went wrong");
         }
 
         const data: redeemGiftProps = await response.json();
         setGift(data);
-        // Set initial available times from the experience data
-        setAvailableTimes(data.experienceId.availableTimes.times);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch gift details.");
+        setAvailableTimes(data.experienceId.availableTimes?.times ?? []);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch gift details.";
+        setError(message);
         console.error(err);
       } finally {
         setLoading(false);
@@ -113,14 +121,17 @@ export default function Page() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings/availability/${gift.experienceId._id}?date=${dateString}`
       );
-      const data = await response.json();
-      setAvailableTimes(data.availableTimes);
-      setIsDateFullyBooked(data.fullyBooked);
-    } catch (error) {
+      const data = (await response.json().catch(() => null)) as
+        | { availableTimes?: ApiTime[]; fullyBooked?: boolean }
+        | null;
+      setAvailableTimes(
+        data?.availableTimes ?? gift.experienceId.availableTimes?.times ?? []
+      );
+      setIsDateFullyBooked(Boolean(data?.fullyBooked));
+    } catch (error: unknown) {
       console.error("Error fetching availability:", error);
-      // Fallback to all times if availability check fails
       if (gift) {
-        setAvailableTimes(gift.experienceId.availableTimes.times);
+        setAvailableTimes(gift.experienceId.availableTimes?.times ?? []);
       }
       setIsDateFullyBooked(false);
     }
@@ -137,7 +148,7 @@ export default function Page() {
       experienceId: gift.experienceId._id,
       title: gift.experienceId.title,
       image: gift.experienceId.images[0],
-      price: bookingData.price, // Redeemed gifts are free
+      price: bookingData.price,
       currency: gift.totalPayable.currency,
       quantity: bookingData.quantity,
       date: bookingData.date,
@@ -145,7 +156,7 @@ export default function Page() {
       location: gift.experienceId.location,
       duration: bookingData.duration.toString(),
       maxParticipants: gift.experienceId.maxParticipants,
-      redeemedBookingId: gift._id, // Link to the original gift booking
+      redeemedBookingId: gift._id,
       oldPrice: gift.totalPayable.amount,
     };
 
@@ -161,6 +172,11 @@ export default function Page() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {error && (
+              <p className="text-center text-sm font-medium text-destructive">
+                {error}
+              </p>
+            )}
             {loading ? (
               <p className="text-center text-muted-foreground">
                 Loading gift details...
@@ -253,5 +269,13 @@ export default function Page() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center text-sm text-muted-foreground">Loading gift details...</div>}>
+      <GiftRedeemContent />
+    </Suspense>
   );
 }

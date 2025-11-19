@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { ApiRate, ApiTime, CartItem } from "@/types";
-import { useRouter } from "next/navigation";
 
 interface BookingFormProps {
   experienceId: string;
@@ -86,7 +85,7 @@ export function BookingForm({
     if (date) {
       onDateChange(date);
     }
-  }, [date]);
+  }, [date, onDateChange]);
 
   const handleRateSelect = (rateString: string) => {
     const rate = rates.find((r) => r.duration === parseInt(rateString));

@@ -48,7 +48,6 @@ export const CategoryPage: FC<CategoryPageProps> = ({
               <ListingCard
                 key={listing.id}
                 slug={listing.slug}
-                id={listing.id}
                 imageSrc={listing.imageSrc}
                 altText={listing.title}
                 title={listing.title}

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ResetPasswordForm } from "@/components/reset-password-form";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,7 +18,9 @@ export default function Page() {
             height={50}
           />
         </Link>
-        <ResetPasswordForm />
+        <Suspense fallback={<div className="text-center text-sm text-muted-foreground">Loading reset form...</div>}>
+          <ResetPasswordForm />
+        </Suspense>
       </div>
     </div>
   );
