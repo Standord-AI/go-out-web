@@ -104,20 +104,12 @@ export default function ExperiencesPage() {
       slug: exp.slug,
       imageSrc: exp.images?.[0] || "/images/placeholder.jpg",
       title: exp.title,
-      location: exp.location
-        ? `${exp.location.city}, ${exp.location.state}`
-        : "Location not specified",
-      duration: exp.rates
-        ? `${Math.min(...exp.rates.map((rate) => rate.duration))} minutes`
-        : "Duration not specified",
-      price: exp.rates
-        ? `${exp.rates[0].price.currency} ${Math.min(
-            ...exp.rates.map((rate) => rate.price.amount)
-          )}`
-        : "Price not specified",
-      activity: exp.category?.name || "Experience",
-      recipient: "All ages",
-      occasion: "Any occasion",
+      location: exp.location ? `${exp.location.city}, ${exp.location.state}` : 'Location not specified',
+      duration: exp.rates ? `${Math.min(...exp.rates.map(rate => rate.duration))} minutes` : 'Duration not specified',
+      price: exp.rates ? `${Math.min(...exp.rates.map(rate => rate.price.amount))} ${exp.rates.find(rate=>rate.price.amount===Math.min(...exp.rates!.map(rate => rate.price.amount)))?.price.currency}` : 'Price not specified',
+      activity: exp.category?.name || 'Experience',
+      recipient: 'All ages',
+      occasion: 'Any occasion',
     }));
   };
 
@@ -140,9 +132,7 @@ export default function ExperiencesPage() {
             );
           case "Price":
             if (!experience.rates) return false;
-            const priceValue = Math.min(
-              ...experience.rates.map((rate) => rate.price.amount)
-            );
+            const priceValue = Math.min(...experience.rates.map(rate => rate.price.amount));
             return selectedOptions.some((option) => {
               const [min, max] = option
                 .split(" - ")

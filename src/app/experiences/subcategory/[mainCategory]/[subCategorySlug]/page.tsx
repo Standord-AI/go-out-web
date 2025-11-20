@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { CategoryPage } from '@/components/categories/CategoryPage';
-import { Listing } from '@/types';
+import { ApiExperience, Category, Listing } from '@/types';
 import { SETTINGS } from '@/core/config/common.settings';
 
 interface PageProps {
@@ -26,7 +26,7 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
       const subcategoryRes = await fetch(`${SETTINGS.CMS_API}/${mainCategory}/get-all`);
       if (subcategoryRes.ok) {
         const subcategories = await subcategoryRes.json();
-        const subcategory = subcategories.find((cat: any) => cat.slug === subCategorySlug);
+        const subcategory = subcategories.find((cat: Category) => cat.slug === subCategorySlug);
         if (subcategory) {
           subcategoryId = subcategory._id;
           subcategoryName = subcategory.name;
@@ -65,15 +65,15 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
     }
 
     // Transform API experiences to Listing format for CategoryPage component
-    const transformExperiencesToListings = (experiences: any[]): Listing[] => {
+    const transformExperiencesToListings = (experiences: Partial<ApiExperience>[]): Listing[] => {
       return experiences.map((exp) => ({
-        id: exp._id,
-        slug: exp.slug,
+        id: exp._id as string,
+        slug: exp.slug as string,
         imageSrc: exp.images?.[0] || '/images/placeholder.jpg',
-        title: exp.title,
+        title: exp.title as string,
         location: exp.location ? `${exp.location.city}, ${exp.location.state}` : 'Location not specified',
-        duration: exp.duration ? `${exp.duration} minutes` : 'Duration not specified',
-        price: exp.price ? `${exp.price.currency} ${exp.price.amount}` : 'Price not specified',
+        duration: exp.rates ? `${Math.min(...exp.rates.map(rate => rate.duration))} minutes` : 'Duration not specified',
+        price: exp.rates ? `${Math.min(...exp.rates.map(rate => rate.price.amount))} ${exp.rates.find(rate=>rate.price.amount===Math.min(...exp.rates!.map(rate => rate.price.amount)))?.price.currency}` : 'Price not specified',
         activity: exp.category?.name || 'Experience',
         recipient: 'All ages',
         occasion: 'Any occasion',

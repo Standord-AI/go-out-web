@@ -82,7 +82,7 @@ export function ResetPasswordForm({
         }),
       });
 
-      let data: any = null;
+      let data = null;
       const ct = response.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         data = await response.json().catch(() => null);

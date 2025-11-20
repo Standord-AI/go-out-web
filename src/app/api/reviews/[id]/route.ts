@@ -4,16 +4,14 @@ import { NextResponse } from "next/server";
 // GET /api/reviews/[id] - Get a specific review
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(
-      `${config.backendApiUrl}/reviews/${params.id}`,
-      {
-        method: "GET",
-        cache: "no-store",
-      }
-    );
+    const { id } = await params;
+    const response = await fetch(`${config.backendApiUrl}/reviews/${id}`, {
+      method: "GET",
+      cache: "no-store",
+    });
 
     const data = await response.json();
 
@@ -26,7 +24,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error(`Error fetching review ${params.id}:`, error);
+    console.error(`Error fetching review:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -37,27 +35,25 @@ export async function GET(
 // PUT /api/reviews/[id] - Update a specific review
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    const response = await fetch(
-      `${config.backendApiUrl}/reviews/${params.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(request.headers.get("cookie")
-            ? { cookie: request.headers.get("cookie") as string }
-            : {}),
-          ...(request.headers.get("authorization")
-            ? { authorization: request.headers.get("authorization") as string }
-            : {}),
-        },
-        body: JSON.stringify(body),
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(`${config.backendApiUrl}/reviews/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(request.headers.get("cookie")
+          ? { cookie: request.headers.get("cookie") as string }
+          : {}),
+        ...(request.headers.get("authorization")
+          ? { authorization: request.headers.get("authorization") as string }
+          : {}),
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
 
     const data = await response.json();
 
@@ -70,7 +66,7 @@ export async function PUT(
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error(`Error updating review ${params.id}:`, error);
+    console.error(`Error updating review:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -81,24 +77,22 @@ export async function PUT(
 // DELETE /api/reviews/[id] - Delete a specific review
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(
-      `${config.backendApiUrl}/reviews/${params.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          ...(request.headers.get("cookie")
-            ? { cookie: request.headers.get("cookie") as string }
-            : {}),
-          ...(request.headers.get("authorization")
-            ? { authorization: request.headers.get("authorization") as string }
-            : {}),
-        },
-        cache: "no-store",
-      }
-    );
+    const { id } = await params;
+    const response = await fetch(`${config.backendApiUrl}/reviews/${id}`, {
+      method: "DELETE",
+      headers: {
+        ...(request.headers.get("cookie")
+          ? { cookie: request.headers.get("cookie") as string }
+          : {}),
+        ...(request.headers.get("authorization")
+          ? { authorization: request.headers.get("authorization") as string }
+          : {}),
+      },
+      cache: "no-store",
+    });
 
     if (response.status === 204 || response.ok) {
       return new NextResponse(null, { status: 204 });
@@ -110,7 +104,7 @@ export async function DELETE(
       { status: response.status }
     );
   } catch (error) {
-    console.error(`Error deleting review ${params.id}:`, error);
+    console.error(`Error deleting review:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

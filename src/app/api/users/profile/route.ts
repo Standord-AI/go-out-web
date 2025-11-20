@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    let data: any = null;
+    let data = null;
     const ct = response.headers.get("content-type") || "";
     if (ct.includes("application/json")) {
       data = await response.json().catch(() => null);

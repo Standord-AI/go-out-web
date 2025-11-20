@@ -1,9 +1,10 @@
+import { ApiTime, CartItem } from "@/types";
 import { NextResponse } from "next/server";
 
 export interface payloadProps {
   experienceId: string;
-  selectedDate: string;
-  selectedTime: string;
+  selectedDate?: Date;
+  selectedTime?: ApiTime;
   duration: number;
   quantity: number;
   name: string;
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { items, customer, gifts } = body;
 
-    const bookingRequests = items.map(async (item: any) => {
+    const bookingRequests = items.map(async (item: CartItem) => {
       const payload: payloadProps = {
         experienceId: item.experienceId,
         selectedDate: item.date,
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
       if (item.isGift === undefined || item.isGift === false) {
         payload.status = "CONFIRMED";
       } else {
-        const gift = gifts?.find((gift: any) => gift.itemId === item.id);
+        const gift = gifts?.find((gift: {itemId: string, recipientEmail: string, message: string, senderName: string}) => gift.itemId === item.id);
         if (!gift) {
           throw new Error(`Gift details missing for cart item ${item.id}`);
         }
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
         payload.receiverEmail = gift.recipientEmail;
         payload.giftMessage = gift.message;
       }
-
+      
       if (!item.redeemedBookingId) {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings`,
@@ -58,8 +59,9 @@ export async function POST(req: Request) {
         );
 
         if (!response.ok) {
+          const errorData = await response.json();
           throw new Error(
-            `Failed to create booking: ${response.status} - ${response.body}`
+            `Failed to create booking: ${response.status} - ${errorData.message}`
           );
         }
       } else {
@@ -94,12 +96,12 @@ export async function POST(req: Request) {
       { message: "All bookings created successfully" },
       { status: 201 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("API booking error:", err);
 
     return NextResponse.json(
       {
-        message: err?.message || "An error occurred while creating bookings",
+        message: (err as Error)?.message || "An error occurred while creating bookings",
       },
       { status: 500 }
     );

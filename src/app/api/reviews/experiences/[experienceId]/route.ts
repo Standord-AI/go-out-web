@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 // GET /api/reviews/experience/[experienceId] - Get all reviews for a specific experience
 export async function GET(
   request: Request,
-  context: { params: Promise<{ experienceId: string }> }
+  { params }: { params: Promise<{ experienceId: string }> }
 ) {
-  const params = await context.params;
+  const { experienceId } = await params;
   const { searchParams } = new URL(request.url);
   // Validate sortBy
   const sortByParam = searchParams.get("sortBy") || "newest";
@@ -32,9 +32,11 @@ export async function GET(
 
   try {
     const response = await fetch(
-      `${config.backendApiUrl}/reviews/experience/${
-        params.experienceId
-      }?sortBy=${encodeURIComponent(sortBy)}&page=${page}&limit=${limit}`,
+      `${
+        config.backendApiUrl
+      }/reviews/experience/${experienceId}?sortBy=${encodeURIComponent(
+        sortBy
+      )}&page=${page}&limit=${limit}`,
       {
         method: "GET",
         cache: "no-store",
@@ -52,7 +54,7 @@ export async function GET(
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error(
-      `Error fetching reviews for experience ${params.experienceId}:`,
+      `Error fetching reviews for experience ${experienceId}:`,
       error
     );
     return NextResponse.json(

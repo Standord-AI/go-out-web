@@ -4,11 +4,12 @@ import { NextResponse } from "next/server";
 // PATCH /api/reviews/[id]/helpful - Mark a review as helpful
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const response = await fetch(
-      `${config.backendApiUrl}/reviews/${params.id}/unhelpful`,
+      `${config.backendApiUrl}/reviews/${id}/unhelpful`,
       {
         method: "PATCH",
         headers: {
@@ -35,7 +36,7 @@ export async function PATCH(
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error(`Error marking review ${params.id} as unhelpful:`, error);
+    console.error(`Error marking review as unhelpful:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

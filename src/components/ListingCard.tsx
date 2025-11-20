@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 interface ListingCardProps {
   id: string;
-  slug: string;
+  slug?: string;
   imageSrc: string;
   altText: string;
   title: string;
@@ -39,7 +39,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
   return (
     <Link href={`/experiences/${slug}`} className="block no-underline">
-      <Card className="min-w-80 bg-white rounded-2xl pt-0 hover:shadow-lg transition-all duration-300 mb-4 cursor-pointer">
+      <Card id={`${id}`} className="min-w-80 bg-white rounded-2xl pt-0 hover:shadow-lg transition-all duration-300 mb-4 cursor-pointer">
         <CardHeader className="relative p-0">
           <Image
             src={imageSrc}
