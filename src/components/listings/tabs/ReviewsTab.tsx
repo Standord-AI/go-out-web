@@ -66,7 +66,11 @@ export function ReviewsTab({
   const [description, setDescription] = useState("");
 
   const handleDialogOpen = () => {
-    !user ? router.push("/auth/login") : setIsDialogOpen(true);
+    if (!user) {
+      router.push("/auth/login");
+    } else {
+      setIsDialogOpen(true);
+    }
   };
 
   const [errors, setErrors] = useState<{

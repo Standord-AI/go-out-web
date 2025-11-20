@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import SectionHeader from '@/components/SectionHeader';
 import CategoryCard from '@/components/landing/ProductCard';
 import { SETTINGS } from '@/core/config/common.settings';
+import { Category } from '@/types';
 
 interface PageProps {
   params: Promise<{
@@ -75,7 +76,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
             const activities = await activitiesRes.json();
             // Fetch real experience counts for each activity
             const activitiesWithCounts = await Promise.all(
-              activities.map(async (activity: any) => {
+              activities.map(async (activity: Category) => {
                 const experienceCount = await getExperienceCount('activities', activity._id);
                 return {
                   _id: activity._id,
@@ -101,7 +102,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
             const occasions = await occasionsRes.json();
             // Fetch real experience counts for each occasion
             const occasionsWithCounts = await Promise.all(
-              occasions.map(async (occasion: any) => {
+              occasions.map(async (occasion: Category) => {
                 const experienceCount = await getExperienceCount('occasions', occasion._id);
                 return {
                   _id: occasion._id,
@@ -127,7 +128,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
             const recipients = await recipientsRes.json();
             // Fetch real experience counts for each recipient
             const recipientsWithCounts = await Promise.all(
-              recipients.map(async (recipient: any) => {
+              recipients.map(async (recipient: Category) => {
                 const experienceCount = await getExperienceCount('recipients', recipient._id);
                 return {
                   _id: recipient._id,

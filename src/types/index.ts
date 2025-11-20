@@ -426,7 +426,7 @@ export interface ApiExperience {
   occassions: string[];
   recipients: string[];
   activities: string[];
-  reviews: any[];
+  reviews: Review[];
   createdAt: string;
   updatedAt: string;
 }
@@ -507,4 +507,14 @@ export interface OrderSummary {
   fees: number;
   total: number;
   currency: string;
+}
+
+export interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  isActive: boolean;
+  archived: boolean;
 }

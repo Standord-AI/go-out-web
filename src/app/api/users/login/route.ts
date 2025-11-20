@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    let data: any = null;
+    let data = null;
     const ct = response.headers.get("content-type") || "";
     if (ct.includes("application/json")) {
       data = await response.json().catch(() => null);
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const res = NextResponse.json(data, { status: 200 });
     // getSetCookie is available in Next's Response headers implementation
     const setCookies =
-      (response.headers as any).getSetCookie?.() ??
+      response.headers.getSetCookie?.() ??
       (response.headers.get("set-cookie")
         ? [response.headers.get("set-cookie") as string]
         : []);

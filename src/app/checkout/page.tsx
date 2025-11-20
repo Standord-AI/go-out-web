@@ -40,6 +40,11 @@ export default function CheckoutPage() {
     phone: "",
     specialRequests: "",
   }));
+  const [giftDetails, setGiftDetails] = useState<Record<string, GiftDetails>>(
+    {}
+  );
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Add error state
 
   useEffect(() => {
     if (!user) {
@@ -51,11 +56,6 @@ export default function CheckoutPage() {
     return null;
   }
 
-  const [giftDetails, setGiftDetails] = useState<Record<string, GiftDetails>>(
-    {}
-  );
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Add error state
 
   const steps = [
     { id: "details", title: "Contact Details" },
@@ -127,8 +127,8 @@ export default function CheckoutPage() {
       setIsProcessing(false);
       setCurrentStep("confirmation");
       clearCart();
-    } catch (err: any) {
-      setError(err.message || "One or more bookings failed.");
+    } catch (err: unknown) {
+      setError((err as Error).message || "One or more bookings failed.");
       setIsProcessing(false);
     }
   };
@@ -259,7 +259,7 @@ export default function CheckoutPage() {
                       htmlFor={`recipientEmail-${item.id}`}
                       className="mb-2"
                     >
-                      Recipient's Email (Optional)
+                      Recipient&apos;s Email (Optional)
                     </Label>
                     <Input
                       id={`recipientEmail-${item.id}`}

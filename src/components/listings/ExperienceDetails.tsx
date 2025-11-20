@@ -9,7 +9,7 @@ import { OverviewTab } from "./tabs/OverviewTab";
 import { ImportantInfoTab } from "./tabs/ImportantInfoTab";
 import { LocationTab } from "./tabs/LocationTab";
 import { ReviewsTab } from "./tabs/ReviewsTab";
-import { ApiExperience, ApiTime, Review, ReviewStat } from "@/types";
+import { ApiExperience, ApiLocation, ApiTime, Review, ReviewStat } from "@/types";
 
 const REVIEWS_PER_PAGE = 5;
 
@@ -45,7 +45,11 @@ export default function ExperienceDetails({
 
   const fetchReviews = async (pageNum: number, shouldAppend = false) => {
     try {
-      shouldAppend === false ? setReviewsLoading(true) : setLoadingMore(true);
+      if (shouldAppend) {
+        setLoadingMore(true);
+      } else {
+        setReviewsLoading(true);
+      }
       const reviewsResponse = await fetch(
         `/api/reviews/experiences/${experienceId}?sortBy=${sortOption}&page=${pageNum}&limit=${REVIEWS_PER_PAGE}`
       );
@@ -100,6 +104,7 @@ export default function ExperienceDetails({
       setReviews([]); // Clear existing reviews
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [experienceId, initialData]);
 
   useEffect(() => {
@@ -118,6 +123,7 @@ export default function ExperienceDetails({
       }
     };
     fetchReviewData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [experienceId, initialData, sortOption]);
 
   const fetchAvailabilityForDate = async (date: Date) => {
@@ -262,7 +268,7 @@ export default function ExperienceDetails({
   };
 
   // Format location
-  const formatLocation = (location: any) => {
+  const formatLocation = (location: ApiLocation) => {
     return `${location.city}, ${location.state}`;
   };
 

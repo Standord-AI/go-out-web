@@ -45,7 +45,7 @@ export default function CartPage() {
             Your cart is empty
           </h1>
           <p className="text-gray-600 mb-6">
-            Looks like you haven't added any experiences to your cart yet.
+            Looks like you haven&apos;t added any experiences to your cart yet.
           </p>
           <Link href="/experiences">
             <Button className="bg-orange-500 hover:bg-orange-600">
@@ -228,7 +228,7 @@ export default function CartPage() {
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
-                  You won't be charged until you complete your booking
+                  You won&apos;t be charged until you complete your booking
                 </p>
               </CardContent>
             </Card>

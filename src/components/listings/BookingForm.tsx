@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { ApiRate, ApiTime, CartItem } from "@/types";
-import { useRouter } from "next/navigation";
 
 interface BookingFormProps {
   experienceId: string;
@@ -86,6 +85,7 @@ export function BookingForm({
     if (date) {
       onDateChange(date);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
   const handleRateSelect = (rateString: string) => {
