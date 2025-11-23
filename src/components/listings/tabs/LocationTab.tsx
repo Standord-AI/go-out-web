@@ -2,7 +2,7 @@
 
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import Map from "@/components/Map";
 
 interface LocationTabProps {
   address: string;
@@ -11,23 +11,19 @@ interface LocationTabProps {
   lng?: number;
 }
 
-export function LocationTab({ address, googleMapsUrl, lat, lng }: LocationTabProps) {
-  const [mapEmbedUrl, setMapEmbedUrl] = useState<string>("");
-
-  useEffect(() => {
-    if (lat && lng) {
-      setMapEmbedUrl(`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${lat},${lng}`);
-    } else if (address) {
-      const encodedAddress = encodeURIComponent(address);
-      setMapEmbedUrl(`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodedAddress}`);
-    }
-  }, [address, lat, lng]);
-
+export function LocationTab({
+  address,
+  googleMapsUrl,
+  lat,
+  lng,
+}: LocationTabProps) {
   const getDirectionsUrl = () => {
     if (googleMapsUrl) return googleMapsUrl;
     return lat && lng
       ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          address
+        )}`;
   };
 
   return (
@@ -39,30 +35,34 @@ export function LocationTab({ address, googleMapsUrl, lat, lng }: LocationTabPro
           <MapPin className="h-5 w-5 text-red-500 mr-2" />
           <span className="text-gray-700">{address}</span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => window.open(getDirectionsUrl(), "_blank")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.open(getDirectionsUrl(), "_blank")}
+        >
           Get Directions
         </Button>
       </div>
 
       {/* Google Maps Embed */}
       <div className="w-full h-[400px] rounded-lg overflow-hidden">
-        {mapEmbedUrl ? (
-          <iframe
-            src={mapEmbedUrl}
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
+        {lat && lng ? (
+          <Map
+            center={{ lat, lng }}
+            markers={[{ position: { lat, lng }, title: "Event Location" }]}
           />
         ) : (
-          <p className="text-gray-500 text-center">Map loading...</p>
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <p className="text-muted-foreground font-medium text-center">
+              Map preview is not available for this location, but you can still
+              get directions.
+            </p>
+          </div>
         )}
       </div>
-
-      <p className="text-xs text-gray-500">
-        Note: Ensure you replace <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> with a valid Google Maps API key.
+      <p className="text-muted-foreground text-sm">
+        Map preview may not be available for this location, but you can still
+        get directions.
       </p>
     </div>
   );

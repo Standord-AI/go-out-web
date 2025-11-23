@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageCarousel } from "./ImageCarousel";
-import { BookingForm, BookingData } from "./BookingForm";
+import { BookingForm } from "./BookingForm";
 import { HeaderInfo } from "./HeaderInfo";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { ImportantInfoTab } from "./tabs/ImportantInfoTab";
 import { LocationTab } from "./tabs/LocationTab";
 import { ReviewsTab } from "./tabs/ReviewsTab";
-import { ApiExperience } from "@/types";
+import { ApiExperience, ApiLocation, ApiTime, Review, ReviewStat } from "@/types";
+
+const REVIEWS_PER_PAGE = 5;
 
 interface ExperienceDetailsProps {
   experienceId: string;
@@ -20,47 +22,145 @@ export default function ExperienceDetails({
   experienceId,
   initialData,
 }: ExperienceDetailsProps) {
-  const [experience, setExperience] = useState<ApiExperience | null>(initialData || null);
+  const [experience, setExperience] = useState<ApiExperience | null>(
+    initialData || null
+  );
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [stats, setStats] = useState<ReviewStat>({
+    averageRating: 0,
+    totalReviews: 0,
+    distribution: [],
+  });
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const [sortOption, setSortOption] = useState("newest");
+  const [activeBookingTab, setActiveBookingTab] = useState("booking");
+  const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(!initialData);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableTimes, setAvailableTimes] = useState<ApiTime[]>([]);
+  const [isDateFullyBooked, setIsDateFullyBooked] = useState(false);
 
-  useEffect(() => {
-    // Only fetch data if we don't have initial data
+  const fetchReviews = async (pageNum: number, shouldAppend = false) => {
+    try {
+      if (shouldAppend) {
+        setLoadingMore(true);
+      } else {
+        setReviewsLoading(true);
+      }
+      const reviewsResponse = await fetch(
+        `/api/reviews/experiences/${experienceId}?sortBy=${sortOption}&page=${pageNum}&limit=${REVIEWS_PER_PAGE}`
+      );
+      if (!reviewsResponse.ok) {
+        throw new Error(`HTTP error! status: ${reviewsResponse.status}`);
+      }
+      const reviewsData: { reviews: Review[]; stats: ReviewStat } =
+        await reviewsResponse.json();
+
+      setReviews((prev) =>
+        shouldAppend ? [...prev, ...reviewsData.reviews] : reviewsData.reviews
+      );
+      setStats(reviewsData.stats);
+      setHasNextPage(reviewsData.reviews.length === REVIEWS_PER_PAGE);
+      setPage(pageNum);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setReviewsLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const fetchData = async () => {
     if (initialData) {
+      setExperience(initialData);
+      setAvailableTimes(initialData.availableTimes.times);
       return;
     }
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        console.log("Fetching experience with ID:", experienceId);
-        
-        const response = await fetch(`/api/experiences/${experienceId}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data: ApiExperience = await response.json();
-        console.log("Fetched experience:", data);
-        setExperience(data);
-      } catch (error) {
-        console.error("Error fetching experience:", error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch experience');
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      const response = await fetch(`/experiences/${experienceId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const data: ApiExperience = await response.json();
+      setExperience(data);
+      setAvailableTimes(data.availableTimes.times); // Initially set all times
+    } catch (error) {
+      console.error("Error fetching experience:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch experience"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (experienceId) {
+      setPage(1); // Reset to first page
+      setReviews([]); // Clear existing reviews
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [experienceId, initialData]);
+
+  useEffect(() => {
+    const fetchReviewData = async () => {
+      try {
+        setReviewsLoading(true);
+        // experienceData passed from previous page
+        await fetchReviews(1);
+      } catch (error) {
+        console.error("Error fetching initial experience data:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to fetch experience"
+        );
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviewData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [experienceId, initialData, sortOption]);
+
+  const fetchAvailabilityForDate = async (date: Date) => {
+    if (!experience) return;
+    try {
+      const dateString = date.toISOString();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/bookings/availability/${experience._id}?date=${dateString}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            cache: "no-store",
+          },
+        }
+      );
+      const data = await response.json();
+
+      setAvailableTimes(data.availableTimes);
+      setIsDateFullyBooked(data.fullyBooked);
+    } catch (error) {
+      console.error("Error fetching availability:", error);
+      // Fallback to all times if availability check fails
+      setAvailableTimes(experience.availableTimes.times);
+      setIsDateFullyBooked(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    fetchReviews(nextPage, true);
+  };
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[70vh]">
-        <p className="text-xl">Loading experience details...</p>
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -82,30 +182,72 @@ export default function ExperienceDetails({
   }
 
   // Handlers for review interactions
-  const handleAddReview = () => {
-    console.log("Add review clicked");
-    // Implement your add review functionality here
+  const handleAddReview = async (reviewData: {
+    rating: number;
+    title?: string;
+    description: string;
+  }) => {
+    try {
+      setReviewsLoading(true);
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...reviewData,
+          experienceId: experienceId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add review");
+      }
+
+      await fetchReviews(1);
+    } catch (err) {
+      console.error("Error adding review:", err);
+    } finally {
+      setReviewsLoading(false);
+    }
   };
 
-  const handleHelpful = (reviewId: string) => {
-    console.log("Marked as helpful:", reviewId);
-    // Implement your helpful functionality here
+  const handleHelpful = async (reviewId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}/helpful`, {
+        method: "PATCH",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to mark review as helpful");
+      }
+      const updatedReview = await response.json();
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review._id === reviewId ? updatedReview : review
+        )
+      );
+    } catch (err) {
+      console.error("Error marking review as helpful:", err);
+    }
   };
 
-  const handleUnhelpful = (reviewId: string) => {
-    console.log("Marked as unhelpful:", reviewId);
-    // Implement your unhelpful functionality here
-  };
-
-  const handleReport = (reviewId: string) => {
-    console.log("Reported review:", reviewId);
-    // Implement your report functionality here
-  };
-
-  // Handler for booking submissions
-  const handleBooking = (bookingData: BookingData) => {
-    console.log("Booking submitted:", bookingData);
-    // Implement your booking submission logic here
+  const handleUnhelpful = async (reviewId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}/unhelpful`, {
+        method: "PATCH",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to mark review as unhelpful");
+      }
+      const updatedReview = await response.json();
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review._id === reviewId ? updatedReview : review
+        )
+      );
+    } catch (err) {
+      console.error("Error marking review as unhelpful:", err);
+    }
   };
 
   // Transform duration from minutes to readable format
@@ -125,76 +267,90 @@ export default function ExperienceDetails({
     }
   };
 
-  // Format price
-  const formatPrice = (price: { amount: number; currency: string }) => {
-    return `${price.currency} ${price.amount}`;
-  };
-
   // Format location
-  const formatLocation = (location: any) => {
+  const formatLocation = (location: ApiLocation) => {
     return `${location.city}, ${location.state}`;
   };
-
-  // Mock booked dates and times (you can integrate this with your booking API later)
-  const bookedDates: Date[] = [];
-  const bookedTimes: { date: Date; times: string[] }[] = [];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Image Carousel Component */}
-        <ImageCarousel 
-          images={experience.images} 
-          altText={experience.title} 
-        />
+        <ImageCarousel images={experience.images} altText={experience.title} />
 
-        {/* Booking Form Component */}
-        <BookingForm
-          experienceId={experience._id}
-          title={experience.title}
-          image={experience.images[0]}
-          price={formatPrice(experience.price)}
-          location={{
-            city: experience.location.city,
-            country: experience.location.country
-          }}
-          duration={formatDuration(experience.duration)}
-          maxParticipants={experience.maxParticipants}
-          onBooking={handleBooking}
-          showTimeSelector={true}
-          timeIntervals={[30, 60, 120]} // 30 mins, 1 hour, 2 hours
-          bookedDates={bookedDates}
-          bookedTimes={bookedTimes}
-        />
+        <Tabs value={activeBookingTab} onValueChange={setActiveBookingTab}>
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="booking">Book Now</TabsTrigger>
+            <TabsTrigger value="gift">Book as a Gift</TabsTrigger>
+          </TabsList>
+          <TabsContent value="booking">
+            <BookingForm
+              experienceId={experience._id}
+              title={experience.title}
+              image={experience.images[0]}
+              location={{
+                city: experience.location.city,
+                country: experience.location.country,
+              }}
+              maxParticipants={experience.maxParticipants}
+              showTimeSelector={true}
+              rates={experience.rates}
+              availableDates={experience.availableDates.dates}
+              availableTimes={availableTimes} // Pass dynamic available times
+              onDateChange={fetchAvailabilityForDate} // Pass handler to fetch availability
+              isDateFullyBooked={isDateFullyBooked}
+            />
+          </TabsContent>
+          <TabsContent value="gift">
+            <BookingForm
+              experienceId={experience._id}
+              title={experience.title}
+              image={experience.images[0]}
+              location={{
+                city: experience.location.city,
+                country: experience.location.country,
+              }}
+              maxParticipants={experience.maxParticipants}
+              showTimeSelector={true}
+              rates={experience.rates}
+              availableDates={experience.availableDates.dates}
+              availableTimes={availableTimes}
+              onDateChange={fetchAvailabilityForDate}
+              isDateFullyBooked={isDateFullyBooked}
+              isGiftForm={true}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Header Info Component */}
       <HeaderInfo
         title={experience.title}
         location={formatLocation(experience.location)}
-        duration={formatDuration(experience.duration)}
+        duration={formatDuration(
+          Math.min(...experience.rates.map((rate) => rate.duration))
+        )}
       />
 
       {/* Tabs for different sections */}
-      <Tabs defaultValue="overview" className="mt-8">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
         <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="important">Important Info</TabsTrigger>
+          <TabsTrigger value="important">Info</TabsTrigger>
           <TabsTrigger value="location">Location</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab Component */}
         <TabsContent value="overview">
           <OverviewTab
             description={experience.description}
             highlights={experience.highlights}
             included={experience.inclusions}
-            sessionLength={formatDuration(experience.duration)}
+            sessionLength={formatDuration(
+              Math.min(...experience.rates.map((rate) => rate.duration))
+            )}
           />
         </TabsContent>
 
-        {/* Important Information Tab Component */}
         <TabsContent value="important">
           <ImportantInfoTab
             exclusions={experience.exclusions}
@@ -202,35 +358,30 @@ export default function ExperienceDetails({
           />
         </TabsContent>
 
-        {/* Location Tab Component */}
         <TabsContent value="location">
           <LocationTab
             address={experience.location.address}
-            lat={experience.location.coordinates.latitude}
-            lng={experience.location.coordinates.longitude}
+            lat={experience.location.coordinates?.latitude}
+            lng={experience.location.coordinates?.longitude}
             googleMapsUrl={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
               experience.location.address
             )}`}
           />
         </TabsContent>
 
-        {/* Reviews Tab Component */}
         <TabsContent value="reviews">
           <ReviewsTab
-            reviews={experience.reviews}
-            stats={{
-              average: 0,
-              total: 0,
-              recommendations: 0,
-              recommendPercent: 0,
-              distribution: [],
-              pros: [],
-              cons: []
-            }}
+            reviews={reviews}
+            stats={stats}
             onAddReview={handleAddReview}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
             onHelpful={handleHelpful}
             onUnhelpful={handleUnhelpful}
-            onReport={handleReport}
+            onLoadMore={handleLoadMore}
+            hasNextPage={hasNextPage}
+            isLoadingMore={loadingMore}
+            reviewsLoading={reviewsLoading}
           />
         </TabsContent>
       </Tabs>

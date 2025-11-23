@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Star, User, MessageCircle, ChevronDown } from "lucide-react";
+import {
+  Star,
+  ChevronDown,
+  ThumbsUp,
+  ThumbsDown,
+  UserCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,36 +16,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Review {
-  id: string;
-  author: string;
-  date: string;
-  rating: number;
-  title?: string;
-  content: string;
-  isVerified?: boolean;
-  helpful: number;
-  unhelpful: number;
-}
-
-interface ReviewStat {
-  average: number;
-  total: number;
-  recommendations?: number;
-  recommendPercent?: number;
-  distribution: { stars: number; percent: number }[];
-  pros: { name: string; rating?: number }[];
-  cons: { name: string }[];
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Review, ReviewStat } from "@/types";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ReviewsTabProps {
   reviews: Review[];
   stats: ReviewStat;
-  onAddReview?: () => void;
+  onAddReview?: (reviewData: { rating: number; description: string }) => void;
   onHelpful?: (reviewId: string) => void;
   onUnhelpful?: (reviewId: string) => void;
-  onReport?: (reviewId: string) => void;
+  sortOption: string;
+  onSortChange: (option: string) => void;
+  onLoadMore: () => void;
+  hasNextPage: boolean;
+  isLoadingMore: boolean;
+  reviewsLoading: boolean;
 }
 
 export function ReviewsTab({
@@ -48,25 +50,57 @@ export function ReviewsTab({
   onAddReview,
   onHelpful,
   onUnhelpful,
-  onReport,
+  sortOption,
+  onSortChange,
+  onLoadMore,
+  hasNextPage,
+  isLoadingMore,
+  reviewsLoading,
 }: ReviewsTabProps) {
-  const [showAllReviews, setShowAllReviews] = useState(false);
-  const [sortOption, setSortOption] = useState("most-helpful");
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Sort reviews based on selected option
-  const sortedReviews = [...reviews].sort((a, b) => {
-    switch (sortOption) {
-      case "newest":
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      case "highest":
-        return b.rating - a.rating;
-      case "lowest":
-        return a.rating - b.rating;
-      case "most-helpful":
-      default:
-        return b.helpful - a.helpful;
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [description, setDescription] = useState("");
+
+  const handleDialogOpen = () => {
+    if (!user) {
+      router.push("/auth/login");
+    } else {
+      setIsDialogOpen(true);
     }
-  });
+  };
+
+  const [errors, setErrors] = useState<{
+    rating?: string;
+    description?: string;
+  }>({});
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    if (rating === 0) newErrors.rating = "Please select a rating.";
+    if (!description.trim()) newErrors.description = "Description is required.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    onAddReview?.({
+      rating,
+      description: description.trim(),
+    });
+
+    // Reset dialog and form
+    setRating(0);
+    setDescription("");
+    setErrors({});
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="space-y-8">
@@ -79,14 +113,14 @@ export function ReviewsTab({
             {/* Overall Rating */}
             <div className="flex flex-col items-center justify-center border-r-2 border-orange-400">
               <div className="text-5xl font-bold mb-2">
-                {stats.average.toFixed(1)}
+                {stats.averageRating.toFixed(1)}
               </div>
               <div className="flex mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
                     className={`h-4 w-4 ${
-                      star <= Math.round(stats.average)
+                      star <= Math.round(stats.averageRating)
                         ? "text-yellow-400 fill-yellow-400"
                         : "text-gray-300"
                     }`}
@@ -94,80 +128,47 @@ export function ReviewsTab({
                 ))}
               </div>
               <div className="text-sm text-gray-500">
-                {stats.total} Reviews
+                {stats.totalReviews} Reviews
               </div>
-              {stats.recommendations && (
-                <div className="text-sm text-gray-500 mt-1">
-                  {stats.recommendations} Recommendations
-                </div>
-              )}
-              {stats.recommendPercent && (
-                <div className="text-sm text-gray-500 mt-1">
-                  {stats.recommendPercent}% Recommend
-                </div>
-              )}
             </div>
 
             {/* Rating Distribution */}
             <div className="space-y-4">
               {stats.distribution.map((item) => (
-                <div key={item.stars} className="flex items-center gap-2">
-                  <span className="text-sm w-fit">{item.stars} Stars</span>
+                <div key={item.rating} className="flex items-center gap-2">
+                  <span className="text-sm w-fit">{item.rating} Stars</span>
                   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400"
-                      style={{ width: `${item.percent}%` }}
+                      style={{ width: `${item.percentage}%` }}
                     ></div>
                   </div>
                   <span className="text-sm w-8 text-right">
-                    {item.percent}%
+                    {item.percentage}%
                   </span>
                 </div>
               ))}
-            </div>
-
-            {/* Pros and Cons */}
-            <div className="space-y-4 flex flex-col md:flex-row gap-4 justify-evenly items-start border-l-2 border-orange-400">
-              <div className="mb-4">
-                <h3 className="font-medium mb-2">Pros</h3>
-                <ul className="space-y-1 text-sm">
-                  {stats.pros.map((pro, idx) => (
-                    <li key={idx} className="text-gray-600">
-                      - {pro.name} {pro.rating && `(${pro.rating})`}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">Cons</h3>
-                <ul className="space-y-1 text-sm">
-                  {stats.cons.map((con, idx) => (
-                    <li key={idx} className="text-gray-600">
-                      - {con.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Review List */}
         <div className="space-y-6">
-          <div className="flex justify-between items-center border-b-2 border-gray-200">
-            <div className="flex items-center justify-center gap-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center border-b-2 border-gray-200 pb-4 gap-4">
+            <div className="flex items-center w-full sm:w-fit justify-between sm:justify-center sm:gap-6">
               <h3 className="text-lg font-medium">Customer Reviews</h3>
-              <Button variant="default" onClick={onAddReview}>
+              <Button variant="default" onClick={handleDialogOpen} className="w-fit">
                 Add a Review
               </Button>
             </div>
-            <Select onValueChange={setSortOption} defaultValue={sortOption}>
-              <SelectTrigger className="min-w-52">
+            <Select onValueChange={onSortChange} value={sortOption}>
+              <SelectTrigger className="w-full sm:w-52">
                 <SelectValue placeholder="Sort by: Most Helpful" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="most-helpful">Most Helpful</SelectItem>
                 <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+                <SelectItem value="most-helpful">Most Helpful</SelectItem>
                 <SelectItem value="highest">Highest Rating</SelectItem>
                 <SelectItem value="lowest">Lowest Rating</SelectItem>
               </SelectContent>
@@ -175,94 +176,176 @@ export function ReviewsTab({
           </div>
 
           {/* Individual Reviews */}
-          <div className="space-y-6">
-            {sortedReviews
-              .slice(0, showAllReviews ? sortedReviews.length : 5)
-              .map((review) => (
-                <div
-                  key={review.id}
-                  className="border-b border-gray-200 pb-6"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-lg font-semibold">
-                      {review.title || `Review by ${review.author}`}
-                    </h4>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`h-4 w-4 ${
-                            star <= review.rating
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
+          {reviewsLoading ? (
+            <div className="flex h-[500px] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {reviews.map((review) =>
+                (() => {
+                  const isHelpful =
+                    user && review.helpfulUsers?.includes(user._id);
+                  const isUnhelpful =
+                    user && review.unhelpfulUsers?.includes(user._id);
+                  return (
+                    <div
+                      key={review._id}
+                      className="border-b border-gray-200 pb-6 flex flex-col gap-6"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex gap-3 items-center text-zinc-600">
+                          <UserCircle />
+                          <span className="font-medium text-lg">
+                            {review.userId.firstName}&nbsp;
+                            {review.userId.lastName}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= review.rating
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <h4 className="text-lg font-semibold">
+                        {review.description ||
+                          `Rated by ${review.userId.firstName} ${review.userId.lastName}`}
+                      </h4>
+                      <span className="text-sm text-muted-foreground font-medium">
+                        {new Date(review.updatedAt).toLocaleDateString()}
+                      </span>
+
+                      <div className="flex items-center gap-4 text-sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`flex items-center gap-1 ${
+                            isHelpful ? "text-primary" : ""
                           }`}
-                        />
-                      ))}
+                          onClick={() =>
+                            !user
+                              ? router.push("/auth/login")
+                              : onHelpful?.(review._id)
+                          }
+                          disabled={isHelpful != null ? isHelpful : false}
+                        >
+                          <ThumbsUp className="size-4" />
+                          Helpful ({review.helpfulCount})
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`flex items-center gap-1 ${
+                            isUnhelpful ? "text-destructive" : ""
+                          }`}
+                          onClick={() =>
+                            !user
+                              ? router.push("/auth/login")
+                              : onUnhelpful?.(review._id)
+                          }
+                          disabled={isUnhelpful != null ? isUnhelpful : false}
+                        >
+                          <ThumbsDown className="size-4" />
+                          Not Helpful ({review.unhelpfulCount})
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  );
+                })()
+              )}
+            </div>
+          )}
 
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <User className="h-4 w-4 mr-1" />
-                    <span>{review.author}</span>
-                    <span className="mx-2">•</span>
-                    <span>{review.date}</span>
-                    {review.isVerified && (
-                      <>
-                        <span className="mx-2">•</span>
-                        <span className="text-green-600">
-                          Verified purchaser
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  <p className="text-gray-700 mb-4">{review.content}</p>
-
-                  <div className="flex items-center gap-4 text-sm">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-1"
-                      onClick={() => onHelpful && onHelpful(review.id)}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      Helpful ({review.helpful})
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-1"
-                      onClick={() => onUnhelpful && onUnhelpful(review.id)}
-                    >
-                      Not Helpful ({review.unhelpful})
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => onReport && onReport(review.id)}
-                    >
-                      Report
-                    </Button>
-                  </div>
-                </div>
-              ))}
-          </div>
-
-          {/* Load More Button */}
-          {!showAllReviews && sortedReviews.length > 5 && (
+          {hasNextPage && (
             <div className="flex justify-center mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowAllReviews(true)}
+                onClick={onLoadMore}
                 className="flex items-center gap-1"
+                disabled={isLoadingMore}
               >
-                Load more reviews
+                {isLoadingMore ? (
+                  <span className="flex gap-2 items-center">
+                    <p>Loading</p>
+                    <Spinner size="sm" />
+                  </span>
+                ) : (
+                  "Load more reviews"
+                )}
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </div>
           )}
         </div>
       </div>
+
+      {/* ADD REVIEW DIALOG */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Your Review</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Rating Section */}
+            <div>
+              <div className="flex justify-center mb-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`h-8 w-8 cursor-pointer transition-colors duration-150 ${
+                      (hoverRating || rating) >= star
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setRating(star)}
+                  />
+                ))}
+              </div>
+              {errors.rating && (
+                <p className="text-sm font-medium text-red-500 text-center">
+                  {errors.rating}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label className="mb-2">Description</Label>
+              <Textarea
+                placeholder="Write your review..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-[100px]"
+              />
+              {errors.description && !description.trim() && (
+                <p className="text-sm font-medium text-red-500 mt-1">
+                  {errors.description}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Submit Review</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
