@@ -2,8 +2,8 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import SectionHeader from '@/components/SectionHeader';
 import CategoryCard from '@/components/landing/ProductCard';
-import { SETTINGS } from '@/core/config/common.settings';
 import { Category } from '@/types';
+import { config } from '@/lib/config';
 
 interface PageProps {
   params: Promise<{
@@ -53,7 +53,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
     // Function to get experience count for a subcategory
     const getExperienceCount = async (categoryType: string, categoryId: string): Promise<number> => {
       try {
-        const response = await fetch(`${SETTINGS.CMS_API}/experiences/by-category/${categoryType}/${categoryId}`);
+        const response = await fetch(`${config.backendApiUrl}/experiences/by-category/${categoryType}/${categoryId}`);
         
         if (response.ok) {
           const experiences = await response.json();
@@ -71,7 +71,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
     try {
       switch (slug) {
         case 'activities':
-          const activitiesRes = await fetch('http://localhost:3000/activities/get-all');
+          const activitiesRes = await fetch(`${config.backendApiUrl}/activities/get-all`);
           if (activitiesRes.ok) {
             const activities = await activitiesRes.json();
             // Fetch real experience counts for each activity
@@ -97,7 +97,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
           break;
 
         case 'occasions':
-          const occasionsRes = await fetch('http://localhost:3000/occasions/get-all');
+          const occasionsRes = await fetch(`${config.backendApiUrl}/occasions/get-all`);
           if (occasionsRes.ok) {
             const occasions = await occasionsRes.json();
             // Fetch real experience counts for each occasion
@@ -123,7 +123,7 @@ export default async function CategoryPageWrapper({ params }: PageProps) {
           break;
 
         case 'recipients':
-          const recipientsRes = await fetch('http://localhost:3000/recipients/get-all');
+          const recipientsRes = await fetch(`${config.backendApiUrl}/recipients/get-all`);
           if (recipientsRes.ok) {
             const recipients = await recipientsRes.json();
             // Fetch real experience counts for each recipient

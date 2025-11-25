@@ -2,7 +2,7 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { CategoryPage } from '@/components/categories/CategoryPage';
 import { ApiExperience, Category, Listing } from '@/types';
-import { SETTINGS } from '@/core/config/common.settings';
+import { config } from '@/lib/config';
 
 interface PageProps {
   params: Promise<{
@@ -23,7 +23,7 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
 
     try {
       // Try to get the subcategory by slug first
-      const subcategoryRes = await fetch(`${SETTINGS.CMS_API}/${mainCategory}/get-all`);
+      const subcategoryRes = await fetch(`${config.backendApiUrl}/${mainCategory}/get-all`);
       if (subcategoryRes.ok) {
         const subcategories = await subcategoryRes.json();
         const subcategory = subcategories.find((cat: Category) => cat.slug === subCategorySlug);
@@ -42,7 +42,7 @@ export default async function SubCategoryPageWrapper({ params }: PageProps) {
     // Try to fetch experiences from the API
     let experiences = [];
     try {
-      const response = await fetch(`${SETTINGS.CMS_API}/experiences/by-category/${mainCategory}/${subcategoryId}`);
+      const response = await fetch(`${config.backendApiUrl}/experiences/by-category/${mainCategory}/${subcategoryId}`);
       if (response.ok) {
         experiences = await response.json();
       }

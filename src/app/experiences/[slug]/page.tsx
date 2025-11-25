@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { SETTINGS } from '@/core/config/common.settings';
 import ExperienceDetails from '@/components/listings/ExperienceDetails';
+import { config } from '@/lib/config';
 
 interface PageProps {
   params: Promise<{
@@ -14,7 +14,7 @@ export default async function ExperiencePage({ params }: PageProps) {
 
   try {
     // Fetch the experience by slug
-    const response = await fetch(`${SETTINGS.CMS_API}/experiences/${slug}`);
+    const response = await fetch(`${config.backendApiUrl}/experiences/${slug}`);
     
     if (!response.ok) {
       notFound();
